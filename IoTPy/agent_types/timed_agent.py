@@ -5,6 +5,7 @@ in the manual documentation.
 from ..core.stream import Stream, StreamArray
 from ..core.agent import Agent
 from ..core.helper_control import _multivalue, _no_value
+
 # agent, stream are in ../core
 # helper_control is in ../core
 from .check_agent_parameter_types import *
@@ -13,8 +14,8 @@ from .check_agent_parameter_types import *
 #                     TIMED ZIP
 ####################################################
 
-def timed_zip_map_agent(func, in_streams, out_stream,
-                        call_streams=None, name=None):
+
+def timed_zip_map_agent(func, in_streams, out_stream, call_streams=None, name=None):
     """
     Parameters
     ----------
@@ -52,11 +53,13 @@ def timed_zip_map_agent(func, in_streams, out_stream,
 
     """
     # Check types of arguments
-    check_list_of_streams_type(list_of_streams=in_streams,
-                          agent_name=name, parameter_name='in_streams')
-    check_stream_type(name, 'out_stream', out_stream)
-    check_list_of_streams_type(list_of_streams=call_streams,
-                          agent_name=name, parameter_name='call_streams')
+    check_list_of_streams_type(
+        list_of_streams=in_streams, agent_name=name, parameter_name="in_streams"
+    )
+    check_stream_type(name, "out_stream", out_stream)
+    check_list_of_streams_type(
+        list_of_streams=call_streams, agent_name=name, parameter_name="call_streams"
+    )
 
     num_in_streams = len(in_streams)
     indices = range(num_in_streams)
@@ -68,14 +71,15 @@ def timed_zip_map_agent(func, in_streams, out_stream,
 
         # input_lists is the list of lists that this agent can operate on
         # in this transition.
-        input_lists = [in_list.list[in_list.start:in_list.stop]
-                       for in_list in in_lists]
+        input_lists = [
+            in_list.list[in_list.start : in_list.stop] for in_list in in_lists
+        ]
         # pointers is a list where pointers[i] is a pointer into the i-th
         # input lists
         pointers = [0 for i in indices]
         # stops is a list where pointers[i] must not exceed stops[i].
         stops = [len(input_lists[i]) for i in indices]
-        # output_list is the single output list for this agent. 
+        # output_list is the single output list for this agent.
         output_list = []
 
         while all(pointers[i] < stops[i] for i in indices):
@@ -93,12 +97,15 @@ def timed_zip_map_agent(func, in_streams, out_stream,
             # for slice[i] is later than earliest time. If the time
             # for slice[i] is the earliest time, hen next_output_value[i]
             # is the list of all the non-time fields.
-            next_output_value = [slice[i][1] if slice[i][0] == earliest_time
-                           else None  for i in indices]
+            next_output_value = [
+                slice[i][1] if slice[i][0] == earliest_time else None for i in indices
+            ]
             # increment pointers for this indexes where the time was the
             # earliest time.
-            pointers = [pointers[i]+1 if slice[i][0] == earliest_time
-                        else pointers[i]  for i in indices]
+            pointers = [
+                pointers[i] + 1 if slice[i][0] == earliest_time else pointers[i]
+                for i in indices
+            ]
 
             # Make next_output a list consisting of a time: the earliest time
             # followed by a sequence of lists, one for each input stream.
@@ -120,13 +127,14 @@ def timed_zip_map_agent(func, in_streams, out_stream,
         #             pointers[i] number of elements in the i-th input
         #             stream, move the starting pointer for the i-th input
         #             stream forward by pointers[i].
-        return [output_list], state, [in_lists[i].start+pointers[i] for i in indices]
+        return [output_list], state, [in_lists[i].start + pointers[i] for i in indices]
+
     # Finished transition
 
     # Create agent
     state = None
     # Create agent with the following parameters:
-    # 1. list of input streams. 
+    # 1. list of input streams.
     # 2. list of output streams. This agent has a single output stream and so
     #         out_streams is [out_stream].
     # 3. transition function
@@ -143,9 +151,8 @@ def timed_zip_agent(in_streams, out_stream, call_streams=None, name=None):
 
     """
     func = lambda x: x
-    timed_zip_map_agent(
-        func, in_streams, out_stream, call_streams=None, name=None)
-    
+    timed_zip_map_agent(func, in_streams, out_stream, call_streams=None, name=None)
+
 
 def timed_zip(list_of_streams):
     """
@@ -153,20 +160,27 @@ def timed_zip(list_of_streams):
     zipped streams and this function returns out_stream.
 
     """
-    out_stream = Stream('output of timed zip')
+    out_stream = Stream("output of timed zip")
     timed_zip_agent(list_of_streams, out_stream)
     return out_stream
-
 
 
 ###############################################################
 #                    TIMED_WINDOW
 ###############################################################
 def timed_window(
-        func, in_stream, out_stream,
-        window_duration, step_time, window_start_time=0,
-        state=None, call_streams=None, name=None,
-        args=[], kwargs={}):
+    func,
+    in_stream,
+    out_stream,
+    window_duration,
+    step_time,
+    window_start_time=0,
+    state=None,
+    call_streams=None,
+    name=None,
+    args=[],
+    kwargs={},
+):
 
     # All windows with start times earlier than window_start_time
     # have already been processed.
@@ -183,10 +197,10 @@ def timed_window(
         # outputs a single list.
         output_list = []
         # input_list is the list extracted from in_list
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         if len(input_list) == 0:
             return ([output_list], state, [in_list.start])
-        
+
         # Extract window start and the underlying state from the combined state.
         window_start_time, temp_state = state
         state = temp_state
@@ -196,13 +210,15 @@ def timed_window(
         # index is a pointer to input_list which starts at 0.
         timestamp_list = [timestamp_and_value[0] for timestamp_and_value in input_list]
         window_start_index = 0
-        
-        # Main loop    
+
+        # Main loop
         while window_end_time <= last_element_time:
             # Compute window_start_index which is the earliest index to an element
             # whose timestamp is greater than or equal to window_start_time
-            while (window_start_index < len(input_list) and
-                   timestamp_list[window_start_index] < window_start_time):
+            while (
+                window_start_index < len(input_list)
+                and timestamp_list[window_start_index] < window_start_time
+            ):
                 window_start_index += 1
 
             if window_start_index >= len(input_list):
@@ -218,12 +234,13 @@ def timed_window(
             if window_end_time > timestamp_list[window_start_index]:
                 num_steps = 0
             else:
-                num_steps = \
-                  1 + int(timestamp_list[window_start_index] - window_end_time) // int(step_time)
+                num_steps = 1 + int(
+                    timestamp_list[window_start_index] - window_end_time
+                ) // int(step_time)
             # Slide the start and end times forward by the number of steps.
             window_start_time += num_steps * step_time
             window_end_time = window_start_time + window_duration
- 
+
             # If window end time exceeds the timestamp of the last element then
             # this time-window crosses the input list. So, we have to wait for
             # elements with higher timestamps before the end of the window can
@@ -237,7 +254,7 @@ def timed_window(
             while timestamp_list[window_end_index] < window_end_time:
                 window_end_index += 1
 
-            next_window = input_list[window_start_index : window_end_index]
+            next_window = input_list[window_start_index:window_end_index]
 
             # Compute output_increment which is the output for
             # next_window.
@@ -249,7 +266,7 @@ def timed_window(
             # Append the output for this window to the output list.
             # The timestamp for this output is window_end_time.
             if output_increment is not _no_value:
-                output_list.append((window_end_time,output_increment))
+                output_list.append((window_end_time, output_increment))
             # Move the window forward by one step.
             window_start_time += step_time
             window_end_time = window_start_time + window_duration
@@ -258,21 +275,32 @@ def timed_window(
         # RETURN OUTPUT LIST, NEW STATE, and NEW STARTING INDEX
         # Compute window_start_index which is the earliest index to an element
         # whose timestamp is greater than or equal to window_start_time
-        while (window_start_index < len(timestamp_list) and
-               timestamp_list[window_start_index] < window_start_time):
+        while (
+            window_start_index < len(timestamp_list)
+            and timestamp_list[window_start_index] < window_start_time
+        ):
             window_start_index += 1
         state = (window_start_time, state)
         # Return the list of output messages, the new state, and the
         # new start value of the input stream.
-        return ([output_list], state, [window_start_index+in_list.start])
-    
+        return ([output_list], state, [window_start_index + in_list.start])
+
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
 def timed_window_function(
-        func, in_stream, window_duration, step_time, state=None, args=[], kwargs={}):
-    out_stream = Stream(func.__name__+in_stream.name)
-    timed_window(func, in_stream, out_stream, window_duration, step_time,
-                    state=state, args=args, kwargs=kwargs)
+    func, in_stream, window_duration, step_time, state=None, args=[], kwargs={}
+):
+    out_stream = Stream(func.__name__ + in_stream.name)
+    timed_window(
+        func,
+        in_stream,
+        out_stream,
+        window_duration,
+        step_time,
+        state=state,
+        args=args,
+        kwargs=kwargs,
+    )
     return out_stream

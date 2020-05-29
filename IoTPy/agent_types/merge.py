@@ -77,16 +77,25 @@ Merge functions:
    
 """
 from .check_agent_parameter_types import *
+
 # check_agent_parameter_types is in the current folder
 from ..core.stream import Stream, _no_value
 from ..core.agent import Agent
+
 # agent and stream are in ../core; _no_value is in helper_control but
 # is imported inside stream
 
+
 def zip_map(
-        func, in_streams, out_stream,
-        state=None, call_streams=None, name='zip_map',
-        *args, **kwargs): 
+    func,
+    in_streams,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name="zip_map",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -122,7 +131,7 @@ def zip_map(
         # input_snapshots is a list of snapshots.
         # Each snapshot is a list containing one element for each
         # input stream.
-        input_snapshots = list(zip(*[v.list[v.start:v.stop] for v in in_lists]))
+        input_snapshots = list(zip(*[v.list[v.start : v.stop] for v in in_lists]))
         # If the new input data is empty then return empty lists for
         # each output stream, and leave the state and the starting point
         # for each input stream unchanged.
@@ -130,9 +139,9 @@ def zip_map(
             return ([[]], state, [v.start for v in in_lists])
 
         # output_list[i] will be set to the result of func applied
-        # to the list consisting of the i-th value in 
+        # to the list consisting of the i-th value in
         # each of the input streams
-        output_list = [ [] for lst in input_snapshots]
+        output_list = [[] for lst in input_snapshots]
 
         for i, snapshot in enumerate(input_snapshots):
             assert isinstance(snapshot, list) or isinstance(snapshot, tuple)
@@ -141,13 +150,20 @@ def zip_map(
             else:
                 output_list[i], state = func(snapshot, state, *args, **kwargs)
 
-            if output_list[i] is None: output_list[i] = []
+            if output_list[i] is None:
+                output_list[i] = []
 
-        return ([output_list], state, [v.start+len(input_snapshots) for v in in_lists])
+        return (
+            [output_list],
+            state,
+            [v.start + len(input_snapshots) for v in in_lists],
+        )
+
     # Finished transition
 
     # Create agent
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
+
 
 def zip_map_f(func, in_streams, state=None, *args, **kwargs):
     """
@@ -170,7 +186,7 @@ def zip_map_f(func, in_streams, state=None, *args, **kwargs):
         * merge_element
 
     """
-    out_stream = Stream('output of zip')
+    out_stream = Stream("output of zip")
     zip_map(func, in_streams, out_stream, state, *args, **kwargs)
     return out_stream
 
@@ -197,10 +213,12 @@ def zip_stream(in_streams, out_stream):
     """
     return zip_map(lambda v: v, in_streams, out_stream)
 
+
 def zip_stream_f(in_streams):
-    out_stream = Stream('output of zip_stream')
+    out_stream = Stream("output of zip_stream")
     zip_stream(in_streams, out_stream)
     return out_stream
+
 
 def zip_streams(in_streams, out_stream):
     """
@@ -215,9 +233,15 @@ def zip_streams(in_streams, out_stream):
 # OPERATIONS ON ASYCHRONOUS INPUT STREAMS
 ####################################################
 def merge_asynch(
-        func, in_streams, out_stream, state=None,
-        call_streams=None, name='merge_asynch',
-        *args, **kwargs): 
+    func,
+    in_streams,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name="merge_asynch",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -244,18 +268,19 @@ def merge_asynch(
          The agent created by this function.
 
     """
+
     def transition(in_lists, state):
         for v in in_lists:
             # loop through each in_stream with one in_list
             # per in_stream
             if v.stop > v.start:
-                # In the following, input_list is the list of new 
+                # In the following, input_list is the list of new
                 # values on an in_stream
-                input_list = v.list[v.start:v.stop]
+                input_list = v.list[v.start : v.stop]
         output_list = []
-        
+
         # If the input data is empty, i.e., if v.stop == v.start for all
-        # v in in_lists, then return empty lists for  each output stream, 
+        # v in in_lists, then return empty lists for  each output stream,
         # and leave the state and the starting point for each input
         # stream unchanged.
         if all(v.stop <= v.start for v in in_lists):
@@ -269,18 +294,20 @@ def merge_asynch(
             if v.stop > v.start:
                 # In the following,input_list is the list of new values
                 # on the input stream with index stream_number
-                input_list = v.list[v.start:v.stop]
+                input_list = v.list[v.start : v.stop]
 
                 # Append each unread element in this input stream,
                 # and its stream_number, to output_list
                 if state is None:
                     for element in input_list:
                         output_list.append(
-                            func((stream_number, element), *args, **kwargs))
+                            func((stream_number, element), *args, **kwargs)
+                        )
                 else:
                     for element in input_list:
                         output_element, state = func(
-                            (stream_number, element), state, *args, **kwargs)
+                            (stream_number, element), state, *args, **kwargs
+                        )
                         output_list.append(output_element)
 
         return ([output_list], state, [v.stop for v in in_lists])
@@ -288,19 +315,22 @@ def merge_asynch(
     # Create agent
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
 
-def merge_asynch_f(
-        func, in_streams, state=None, *args, **kwargs):
-    out_stream = Stream('output of merge_asynch_f')
+
+def merge_asynch_f(func, in_streams, state=None, *args, **kwargs):
+    out_stream = Stream("output of merge_asynch_f")
     merge_asynch(func, in_streams, out_stream, state, *args, **kwargs)
     return out_stream
 
+
 def mix(in_streams, out_stream):
-    return merge_asynch(lambda v: v, in_streams, out_stream, name='mix')
+    return merge_asynch(lambda v: v, in_streams, out_stream, name="mix")
+
 
 def mix_f(in_streams):
-    out_stream = Stream('mix')
+    out_stream = Stream("mix")
     mix(in_streams, out_stream)
     return out_stream
+
 
 def timed_mix(in_streams, out_stream):
     def f(index_and_time_value_pair, state):
@@ -314,13 +344,23 @@ def timed_mix(in_streams, out_stream):
 
     merge_asynch(f, in_streams, out_stream, state=-1)
 
+
 def timed_mix_f(in_streams):
-    out_stream = Stream('timed mix')
+    out_stream = Stream("timed mix")
     timed_mix(in_streams, out_stream)
     return out_stream
 
-def blend(func, in_streams, out_stream, state=None,
-          call_streams=None, name='blend', *args, **kwargs):
+
+def blend(
+    func,
+    in_streams,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name="blend",
+    *args,
+    **kwargs
+):
     """
      Parameters
     ----------
@@ -344,11 +384,12 @@ def blend(func, in_streams, out_stream, state=None,
          The agent created by this function.
 
     """
+
     def transition(in_lists, state):
         output_list = []
-        
+
         # If the input data is empty, i.e., if v.stop == v.start for all
-        # v in in_lists, then return empty lists for  each output stream, 
+        # v in in_lists, then return empty lists for  each output stream,
         # and leave the state and the starting point for each input
         # stream unchanged.
         if all(v.stop <= v.start for v in in_lists):
@@ -362,7 +403,7 @@ def blend(func, in_streams, out_stream, state=None,
             if v.stop > v.start:
                 # In the following,input_list is the list of new values
                 # on the input stream with index stream_number
-                input_list = v.list[v.start:v.stop]
+                input_list = v.list[v.start : v.stop]
 
                 # Add each unread element in this input stream, with the
                 # stream_number, to output_list.
@@ -381,27 +422,38 @@ def blend(func, in_streams, out_stream, state=None,
 
 
 def blend_f(func, in_streams, state=None, *args, **kwargs):
-    out_stream = Stream('output of blend')
+    out_stream = Stream("output of blend")
     blend(func, in_streams, out_stream, state, *args, **kwargs)
     return out_stream
 
+
 def weave(in_streams, out_stream):
-    func=lambda v: v
+    func = lambda v: v
     blend(func, in_streams, out_stream)
 
+
 def weave_f(in_streams):
-    out_stream = Stream('output of weave')
+    out_stream = Stream("output of weave")
     weave(in_streams, out_stream)
     return out_stream
-    
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 # MERGE_WINDOW: LIST OF INPUT STREAMS, SINGLE OUTPUT STREAM
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def merge_window(
-        func, in_streams, out_stream, window_size, step_size,
-        state=None, initial_value=None, call_streams=None,
-        name='merge_window', *args, **kwargs):
+    func,
+    in_streams,
+    out_stream,
+    window_size,
+    step_size,
+    state=None,
+    initial_value=None,
+    call_streams=None,
+    name="merge_window",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -450,46 +502,67 @@ def merge_window(
         output_list = []
         # The merge agent has a list of input streams. So, the transition
         # operates on in_lists which is a list of elements, each of type InList.
-        smallest_list_length = \
-          min(in_list.stop - in_list.start for in_list in in_lists)
+        smallest_list_length = min(in_list.stop - in_list.start for in_list in in_lists)
 
         if window_size > smallest_list_length:
             # No changes are made.
-            return ([output_list], state,
-                    [in_list.start for in_list in in_lists])
+            return ([output_list], state, [in_list.start for in_list in in_lists])
 
         # There is enough input for at least one step.
-        num_steps = 1+(smallest_list_length - window_size)//step_size
-        output_list = [[]]*num_steps
+        num_steps = 1 + (smallest_list_length - window_size) // step_size
+        output_list = [[]] * num_steps
 
         for i in range(num_steps):
             # windows is a list with a window for each input stream.
-            windows = [in_list.list[
-                in_list.start+i*step_size : in_list.start+i*step_size+window_size]
-                for in_list in in_lists]
+            windows = [
+                in_list.list[
+                    in_list.start
+                    + i * step_size : in_list.start
+                    + i * step_size
+                    + window_size
+                ]
+                for in_list in in_lists
+            ]
             if state is None:
                 output_list[i] = func(windows, *args, **kwargs)
             else:
                 output_list[i], state = func(windows, state, *args, **kwargs)
         # Finished iteration: for i in range(num_steps)
 
-        return ([output_list], state,
-                [in_list.start+num_steps*step_size for in_list in in_lists])
+        return (
+            [output_list],
+            state,
+            [in_list.start + num_steps * step_size for in_list in in_lists],
+        )
+
     # Finished transition
 
     # Create agent
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
 
-def merge_window_f(func, in_streams, window_size, step_size, state=None, *args, **kwargs):
-    out_stream = Stream(func.__name__+in_streams[0].name)
-    merge_window(func, in_streams, out_stream, window_size, step_size,
-                       state, *args, **kwargs)
+
+def merge_window_f(
+    func, in_streams, window_size, step_size, state=None, *args, **kwargs
+):
+    out_stream = Stream(func.__name__ + in_streams[0].name)
+    merge_window(
+        func, in_streams, out_stream, window_size, step_size, state, *args, **kwargs
+    )
     return out_stream
 
+
 def merge_multiple_windows(
-        func, in_streams, out_stream, window_sizes, step_sizes,
-        state=None, call_streams=None, name='merge_multiple_windows',
-        *args, **kwargs):
+    func,
+    in_streams,
+    out_stream,
+    window_sizes,
+    step_sizes,
+    state=None,
+    call_streams=None,
+    name="merge_multiple_windows",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -532,49 +605,66 @@ def merge_multiple_windows(
             if window_sizes[index] > list_length:
                 # No changes are made because not enough new data in
                 # in_stream
-                return ([output_list], state,
-                        [in_list.start for in_list in in_lists])
+                return ([output_list], state, [in_list.start for in_list in in_lists])
             # There is enough new data in this in_stream for
             # at least one step.
             # num_steps_list[index] is the number of steps that can be
             # taken based only on the stream: in_streams[index].
-            num_steps_list[index] = (1 +
-                                (list_length - window_sizes[index])//
-                                step_sizes[index])
+            num_steps_list[index] = (
+                1 + (list_length - window_sizes[index]) // step_sizes[index]
+            )
         # num_steps is a positive integer. It is the number of steps
         # that can be taken based on all the input streams.
         num_steps = min(num_steps_list)
 
         # Compute the element of the output stream for each step
         # for a total of num_steps.
-        output_list = [[]]*num_steps
+        output_list = [[]] * num_steps
         for i in range(num_steps):
             # windows is a list with a window for each input stream.
-            windows = [in_lists[index].list[
-                in_lists[index].start+i*step_sizes[index] :
-                in_lists[index].start+i*step_sizes[index] + window_sizes[index]]
-                for index in range(num_in_streams)]
+            windows = [
+                in_lists[index].list[
+                    in_lists[index].start
+                    + i * step_sizes[index] : in_lists[index].start
+                    + i * step_sizes[index]
+                    + window_sizes[index]
+                ]
+                for index in range(num_in_streams)
+            ]
             if state is None:
                 output_list[i] = func(windows, *args, **kwargs)
             else:
                 output_list[i], state = func(windows, state, *args, **kwargs)
         # Finished iteration: for i in range(num_steps)
 
-        return ([output_list], state,
-                [in_lists[index].start+num_steps*step_sizes[index]
-                 for index in range(num_in_streams)])
+        return (
+            [output_list],
+            state,
+            [
+                in_lists[index].start + num_steps * step_sizes[index]
+                for index in range(num_in_streams)
+            ],
+        )
+
     # Finished transition
 
     # Create agent
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
 
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # MERGE_LIST: LIST OF INPUT STREAMS, SINGLE OUTPUT STREAM
-#-----------------------------------------------------------------------
-def merge_list(func, in_streams, out_stream, state=None,
-                        call_streams=None, name=None,
-                        *args, **kwargs):
+# -----------------------------------------------------------------------
+def merge_list(
+    func,
+    in_streams,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -610,21 +700,20 @@ def merge_list(func, in_streams, out_stream, state=None,
         check_in_lists_type(name, in_lists, num_in_streams)
         # smallest_list_length is the smallest of all the inputs for
         # this agent.
-        smallest_list_length = \
-          min(in_list.stop - in_list.start for in_list in in_lists)
+        smallest_list_length = min(in_list.stop - in_list.start for in_list in in_lists)
         # Check for null transition.
         if smallest_list_length == 0:
             # output_list is []
             # return ([output_list], state,
             #         [in_list.start+smallest_list_length
             #                           for in_list in in_lists])
-            return ([[]], state,
-                    [in_list.start for in_list in in_lists])
+            return ([[]], state, [in_list.start for in_list in in_lists])
         # input_lists is the list of lists that this agent operates on
         # in this transition.
-        input_lists = [in_list.list[
-            in_list.start:in_list.start+smallest_list_length]
-            for in_list in in_lists]
+        input_lists = [
+            in_list.list[in_list.start : in_list.start + smallest_list_length]
+            for in_list in in_lists
+        ]
 
         # Compute the output generated by this transition.
         if state is None:
@@ -639,14 +728,17 @@ def merge_list(func, in_streams, out_stream, state=None,
         #             this agent. Since this agent has read the entire
         #             input_list, move its starting pointer forward by
         #             the length of the input list.
-        return ([output_list],
-                state,
-                [in_list.start+smallest_list_length for in_list in in_lists])
+        return (
+            [output_list],
+            state,
+            [in_list.start + smallest_list_length for in_list in in_lists],
+        )
+
     # Finished transition
 
     # Create agent with the following parameters:
     # 1. list of input streams. merge has a list, instreams, of input
-    # streams. 
+    # streams.
     # 2. list of output streams. merge has a single output stream.
     # 3. transition function
     # 4. new state
@@ -654,12 +746,15 @@ def merge_list(func, in_streams, out_stream, state=None,
     # 6. Agent name
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
 
+
 zip_map_list = merge_list
 
+
 def merge_list_f(func, in_streams, state=None, *args, **kwargs):
-    out_stream = Stream('merge_list_f:' + func.__name__)
+    out_stream = Stream("merge_list_f:" + func.__name__)
     merge_list(func, in_streams, out_stream, state, None, None, *args, **kwargs)
     return out_stream
+
 
 zip_map_list_f = merge_list_f
 
@@ -698,11 +793,13 @@ def timed_zip(in_streams, out_stream, call_streams=None, name=None):
 
     """
     # Check types of arguments
-    check_list_of_streams_type(list_of_streams=in_streams,
-                          agent_name=name, parameter_name='in_streams')
-    check_stream_type(name, 'out_stream', out_stream)
-    check_list_of_streams_type(list_of_streams=call_streams,
-                          agent_name=name, parameter_name='call_streams')
+    check_list_of_streams_type(
+        list_of_streams=in_streams, agent_name=name, parameter_name="in_streams"
+    )
+    check_stream_type(name, "out_stream", out_stream)
+    check_list_of_streams_type(
+        list_of_streams=call_streams, agent_name=name, parameter_name="call_streams"
+    )
 
     num_in_streams = len(in_streams)
     indices = range(num_in_streams)
@@ -714,14 +811,15 @@ def timed_zip(in_streams, out_stream, call_streams=None, name=None):
 
         # input_lists is the list of lists that this agent can operate on
         # in this transition.
-        input_lists = [in_list.list[in_list.start:in_list.stop]
-                       for in_list in in_lists]
+        input_lists = [
+            in_list.list[in_list.start : in_list.stop] for in_list in in_lists
+        ]
         # pointers is a list where pointers[i] is a pointer into the i-th
         # input lists
         pointers = [0 for i in indices]
         # stops is a list where pointers[i] must not exceed stops[i].
         stops = [len(input_lists[i]) for i in indices]
-        # output_list is the single output list for this agent. 
+        # output_list is the single output list for this agent.
         output_list = []
 
         while all(pointers[i] < stops[i] for i in indices):
@@ -739,12 +837,15 @@ def timed_zip(in_streams, out_stream, call_streams=None, name=None):
             # for slice[i] is later than earliest time. If the time
             # for slice[i] is the earliest time, hen next_output_value[i]
             # is the list of all the non-time fields.
-            next_output_value = [slice[i][1] if slice[i][0] == earliest_time
-                           else None  for i in indices]
+            next_output_value = [
+                slice[i][1] if slice[i][0] == earliest_time else None for i in indices
+            ]
             # increment pointers for this indexes where the time was the
             # earliest time.
-            pointers = [pointers[i]+1 if slice[i][0] == earliest_time
-                        else pointers[i]  for i in indices]
+            pointers = [
+                pointers[i] + 1 if slice[i][0] == earliest_time else pointers[i]
+                for i in indices
+            ]
 
             # Make next_output a list consisting of a time: the earliest time
             # followed by a sequence of lists, one for each input stream.
@@ -765,13 +866,14 @@ def timed_zip(in_streams, out_stream, call_streams=None, name=None):
         #             pointers[i] number of elements in the i-th input
         #             stream, move the starting pointer for the i-th input
         #             stream forward by pointers[i].
-        return [output_list], state, [in_lists[i].start+pointers[i] for i in indices]
+        return [output_list], state, [in_lists[i].start + pointers[i] for i in indices]
+
     # Finished transition
 
     # Create agent
     state = None
     # Create agent with the following parameters:
-    # 1. list of input streams. 
+    # 1. list of input streams.
     # 2. list of output streams. This agent has a single output stream and so
     #         out_streams is [out_stream].
     # 3. transition function
@@ -780,9 +882,8 @@ def timed_zip(in_streams, out_stream, call_streams=None, name=None):
     # 6. Agent name
     return Agent(in_streams, [out_stream], transition, state, call_streams, name)
 
+
 def timed_zip_f(list_of_streams):
-    out_stream = Stream('output of timed zip')
+    out_stream = Stream("output of timed zip")
     timed_zip(list_of_streams, out_stream)
     return out_stream
-
-

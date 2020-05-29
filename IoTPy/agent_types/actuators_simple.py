@@ -10,7 +10,8 @@ def print_from_queue(q):
             # exit loop
             return
         else:
-            print (str(v))
+            print(str(v))
+
 
 class queue_to_file(object):
     """
@@ -18,12 +19,13 @@ class queue_to_file(object):
     into the file called self.filename
 
     """
+
     def __init__(self, filename, timeout=0):
         self.filename = filename
         self.timeout = timeout
 
     def actuate(self, q):
-        with open(self.filename, 'w') as the_file:
+        with open(self.filename, "w") as the_file:
             while True:
                 try:
                     v = q.get(timeout=self.timeout)
@@ -34,6 +36,4 @@ class queue_to_file(object):
                     # exit loop
                     return
                 else:
-                    the_file.write(str(v) + '\n')
-
-    
+                    the_file.write(str(v) + "\n")

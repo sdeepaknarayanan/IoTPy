@@ -1,12 +1,14 @@
 import threading
 import multiprocessing
 import sys
+
 # Check the version of Python
-is_py2 = sys.version[0] == '2'
+is_py2 = sys.version[0] == "2"
 if is_py2:
     import Queue as queue
 else:
     import queue as queue
+
 
 class ComputeEngine(object):
     """
@@ -90,10 +92,11 @@ class ComputeEngine(object):
     terminates if no data is available in input_queue.
 
     """
+
     def __init__(self, process=None):
         self.process = process
         if self.process == None:
-            self.process_name = 'DefaultProcess'
+            self.process_name = "DefaultProcess"
             self.process_id = 0
             self.main_lock = None
             self.source_status = None
@@ -111,7 +114,7 @@ class ComputeEngine(object):
         self.compute_thread = None
         self.lock = threading.Lock()
         self.stopped = False
-        
+
     def put(self, a):
         """
         Puts the agent a into q_agents if the 
@@ -171,7 +174,7 @@ class ComputeEngine(object):
                 if sum(self.source_status) + sum(self.queue_status) == 0:
                     # Broadcast 'stop'
                     # The stream name and stream element are both 'stop'.
-                    self.process.broadcast('stop', 'stop')
+                    self.process.broadcast("stop", "stop")
                 self.main_lock.release()
                 # Released main_lock -------------------------------
 
@@ -183,7 +186,7 @@ class ComputeEngine(object):
                     self.stopped = True
                     # msg_to_all_other_processes() is like broadcast, except
                     # that a process does not send a message to itself.
-                    self.process.msg_to_all_other_processes('stop', 'stop')
+                    self.process.msg_to_all_other_processes("stop", "stop")
 
                 if not self.stopped:
                     # Succeeded in getting a message from input_queue.
@@ -191,7 +194,7 @@ class ComputeEngine(object):
                     #     (stream name, element for this stream)
                     # Get the specified stream name and its next element.
                     out_stream_name, new_data_for_stream = v
-                    if out_stream_name == 'source_finished':
+                    if out_stream_name == "source_finished":
                         # A source has finished generating values. The
                         # status of this source is set to finished, i.e. 0.
                         # Execution returns to the beginning of the while loop
@@ -199,7 +202,7 @@ class ComputeEngine(object):
                         # Termination is when all sources have terminated
                         # and input queues of all processes are empty.
                         pass
-                    elif out_stream_name == 'stop':
+                    elif out_stream_name == "stop":
                         # This process may have broadcast 'stop' itself, and it
                         # now receives its own 'stop' message. Or, some other
                         # process broadcast ('stop', 'stop'). In either case, this
@@ -209,19 +212,19 @@ class ComputeEngine(object):
                         # This message is to be appended to the specified
                         # out_stream.
                         # Get the stream from its name
-                        out_stream = self.name_to_stream[out_stream_name] 
+                        out_stream = self.name_to_stream[out_stream_name]
                         out_stream.append(new_data_for_stream)
                         # Take a step of the computation, i.e.
                         # process the new input data and continue
                         # executing this thread.
                         self.step()
             # Exit loop, and terminate thread when self.stopped is
-            # True. 
+            # True.
             return
 
         self.compute_thread = threading.Thread(
-            target=target_of_compute_thread,
-            name=self.process_name, args=())
+            target=target_of_compute_thread, name=self.process_name, args=()
+        )
 
     def start(self):
         """
@@ -252,10 +255,5 @@ class ComputeEngine(object):
     def join(self):
         self.compute_thread.join()
 
-#----------------------------------------------------------
 
-
-
-        
-
-
+# ----------------------------------------------------------

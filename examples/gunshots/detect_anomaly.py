@@ -3,6 +3,7 @@ import statistics
 
 import sys
 import os
+
 sys.path.append(os.path.abspath("../../IoTPy/"))
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
@@ -15,8 +16,8 @@ from print_stream import print_stream
 from recent_values import recent_values
 from sink import stream_to_file
 
-def short_term_long_term_anomaly(
-        window, short_term_duration, threshold, cutoff):
+
+def short_term_long_term_anomaly(window, short_term_duration, threshold, cutoff):
     """
     Parameters
     ----------
@@ -42,22 +43,25 @@ def short_term_long_term_anomaly(
 
     """
     # Compute recent_average from the latest short_term_duration
-    # elements of window. 
+    # elements of window.
     recent_average = statistics.mean(window[-short_term_duration:])
     # clipped_window strips out extreme readings.
-    clipped_window = [v for v in window if
-                      abs(v) < cutoff * abs(statistics.mean(window))]
+    clipped_window = [
+        v for v in window if abs(v) < cutoff * abs(statistics.mean(window))
+    ]
     # If too many values in window have been stripped off then replace
-    # them. 
-    if len(clipped_window) < len(window)/2.0:
+    # them.
+    if len(clipped_window) < len(window) / 2.0:
         clipped_window = window
     long_term_average = statistics.mean(clipped_window)
     anomaly = recent_average > long_term_average * threshold
     anomaly_signal = 1.0 if anomaly else 0.0
     return anomaly_signal
 
-def anomaly_stream(in_stream, out_stream, long_term_duration,
-                   short_term_duration, threshold, cutoff):
+
+def anomaly_stream(
+    in_stream, out_stream, long_term_duration, short_term_duration, threshold, cutoff
+):
     """
     Parameters
     ----------
@@ -82,9 +86,11 @@ def anomaly_stream(in_stream, out_stream, long_term_duration,
     """
     map_window(
         func=short_term_long_term_anomaly,
-        in_stream=in_stream, out_stream=out_stream, 
-        window_size=long_term_duration, step_size=1,
-        short_term_duration=short_term_duration, 
-        threshold=threshold, cutoff=cutoff)
-
-    
+        in_stream=in_stream,
+        out_stream=out_stream,
+        window_size=long_term_duration,
+        step_size=1,
+        short_term_duration=short_term_duration,
+        threshold=threshold,
+        cutoff=cutoff,
+    )

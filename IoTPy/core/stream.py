@@ -5,17 +5,22 @@ of PythonStreams.
 """
 # division is used in stream/value operations
 from __future__ import division
+
 # numpy used in StreamArray.
 import numpy as np
+
 # system_parameters is in IoTPy/IoTPy/core
 from .system_parameters import DEFAULT_NUM_IN_MEMORY
+
 # compute_engine is in IoTPy/IoTPy/core
 from .compute_engine import ComputeEngine
+
 # helper_control is in IoTPy/IoTPy/core
 from .helper_control import TimeAndValue, _multivalue
 from .helper_control import _no_value
 from .helper_control import remove_novalue_and_open_multivalue
 from .helper_control import remove_None
+
 
 class Stream(object):
     """
@@ -260,6 +265,7 @@ class Stream(object):
     next() of each agent.
 
     """
+
     # SCHEDULER
     # The scheduler is a Class attribute. It is not an
     # object instance attribute. All instances of Stream
@@ -269,11 +275,14 @@ class Stream(object):
     # agent from the scheduler queue and executes a step
     # of that agent.
     scheduler = ComputeEngine()
-    
-    def __init__(self, name="UnnamedStream", 
-                 initial_value=[],
-                 num_in_memory=DEFAULT_NUM_IN_MEMORY,
-                 discard_None=True):
+
+    def __init__(
+        self,
+        name="UnnamedStream",
+        initial_value=[],
+        num_in_memory=DEFAULT_NUM_IN_MEMORY,
+        discard_None=True,
+    ):
         self.name = name
         self.num_in_memory = num_in_memory
         self._begin = 0
@@ -288,7 +297,7 @@ class Stream(object):
         self.discard_None = discard_None
         # Set up the initial value of the stream.
         self.extend(initial_value)
-        
+
     def register_reader(self, new_reader, start_index=0):
         """
         A newly registered reader starts reading  the stream from
@@ -327,7 +336,7 @@ class Stream(object):
     def wakeup_subscribers(self):
         # Put subscribers (i.e. agents in self.subscribers_set) into
         # the compute_engine's queue. Each agents in this queue will be
-        # removed from the queue and then execute a step.  
+        # removed from the queue and then execute a step.
         for subscriber in self.subscribers_set:
             self.scheduler.put(subscriber)
 
@@ -344,7 +353,6 @@ class Stream(object):
         # Inform subscribers that the stream has been modified.
         self.wakeup_subscribers()
 
-    
     def extend(self, value_list):
         """
         Extend the stream by value_list.
@@ -364,9 +372,11 @@ class Stream(object):
             value_list = list(value_list)
         if isinstance(value_list, tuple):
             value_list = list(value_list)
-        assert (isinstance(value_list, list)), \
-          'value_list = {0}, stream = {1}. value_list is not a list'.format(
-              value_list, self.name)
+        assert isinstance(
+            value_list, list
+        ), "value_list = {0}, stream = {1}. value_list is not a list".format(
+            value_list, self.name
+        )
 
         if len(value_list) == 0:
             return
@@ -379,7 +389,7 @@ class Stream(object):
             value_list = remove_None(value_list)
 
         # Make a new version of self.recent if the space in
-        # self.recent is insufficient. 
+        # self.recent is insufficient.
         # This operation changes self.recent, self.stop and self.start.
         if self.stop + len(value_list) >= len(self.recent):
             # Insufficient space to store value_list.
@@ -387,17 +397,19 @@ class Stream(object):
 
         # Check that this method is not putting a value_list that is
         # too large for the memory size.
-        assert(self.stop+len(value_list) < len(self.recent)), \
-          'memory is too small to store the stream, {0}. ' \
-          ' Currently the stream has {1} elements in main memory. ' \
-          ' We are now adding {2} more elements to main memory. '\
-          ' The length of the buffer is only {3}. '.format(
-              self.name, self.stop, len(value_list), len(self.recent))
+        assert self.stop + len(value_list) < len(self.recent), (
+            "memory is too small to store the stream, {0}. "
+            " Currently the stream has {1} elements in main memory. "
+            " We are now adding {2} more elements to main memory. "
+            " The length of the buffer is only {3}. ".format(
+                self.name, self.stop, len(value_list), len(self.recent)
+            )
+        )
 
         # Put value_list into the appropriate slice of self.recent and
         # update stop.
-        self.recent[self.stop: self.stop+len(value_list)] = value_list
-        self.stop = self.stop+len(value_list)
+        self.recent[self.stop : self.stop + len(value_list)] = value_list
+        self.stop = self.stop + len(value_list)
         # Inform subscribers that the stream has been modified.
         self.wakeup_subscribers()
 
@@ -405,7 +417,7 @@ class Stream(object):
         self.name = name
 
     def print_recent(self):
-        print('{0}  = {1}'.format(self.name, self.recent[:self.stop]))
+        print("{0}  = {1}".format(self.name, self.recent[: self.stop]))
 
     def set_start(self, reader, starting_value):
         """ The reader tells the stream that it is only accessing
@@ -413,7 +425,7 @@ class Stream(object):
 
         """
         self.start[reader] = starting_value
- 
+
     def get_latest(self, default_for_empty_stream=0):
         """ Returns the latest element in the stream.
         The latest element is the most recent element put in
@@ -425,7 +437,7 @@ class Stream(object):
             return default_for_empty_stream
         else:
             return self.recent[self.stop - 1]
- 
+
     def get_latest_index(self, default_for_empty_stream=-1):
         """ Returns the index of the latest element in the stream.
         The latest element is the most recent element put in
@@ -437,7 +449,7 @@ class Stream(object):
             return default_for_empty_stream
         else:
             return self.offset + self.stop - 1
- 
+
     def get_earliest_index_in_memory(self, default_for_empty_stream=-1):
         """ Returns the index of the earliest element in the stream
         that is in main memory.
@@ -461,8 +473,8 @@ class Stream(object):
             number of elements in the stream is less than n, then
             it returns all the elements in the stream.
         """
-        return self.recent[max(self.stop-n, 0) : self.stop]
-    
+        return self.recent[max(self.stop - n, 0) : self.stop]
+
     def get_latest_n(self, n):
         """ Same as get_last_n()
 
@@ -477,7 +489,6 @@ class Stream(object):
 
         """
         return self.stop + self.offset
-        
 
     def is_empty(self):
         """
@@ -514,12 +525,11 @@ class Stream(object):
         """
         assert isinstance(index, int)
         if index >= self.offset + self.stop:
-            return (self.offset + self.stop,
-                    self.recent[self.stop:self.stop])
+            return (self.offset + self.stop, self.recent[self.stop : self.stop])
         if index < self.offset:
-            return (self.offset, self.recent[:self.stop])
+            return (self.offset, self.recent[: self.stop])
         else:
-            return (index, self.recent[index - self.offset: self.stop])
+            return (index, self.recent[index - self.offset : self.stop])
 
     def get_contents_after_column_value(self, column_number, value):
         """ Assumes that the stream consists of rows where the
@@ -530,19 +540,20 @@ class Stream(object):
                row[column_number] >= value
 
         """
-        assert(isinstance(column_number, int))
-        assert(column_number >= 0)
+        assert isinstance(column_number, int)
+        assert column_number >= 0
         try:
             start_index = np.searchsorted(
-                [row[column_number] for row in self.recent[:self.stop]], value)
+                [row[column_number] for row in self.recent[: self.stop]], value
+            )
             if start_index >= self.stop:
                 return []
             else:
-                return self.recent[start_index:self.stop]
+                return self.recent[start_index : self.stop]
         except:
-            print ('Error In Stream.py. In get_contents_after_column_value()')
-            print ('column_number = {})'.format(column_number))
-            print ('value =', {}).format(value)
+            print("Error In Stream.py. In get_contents_after_column_value()")
+            print("column_number = {})".format(column_number))
+            print("value =", {}).format(value)
             raise
 
     def get_index_for_column_value(self, column_number, value):
@@ -551,18 +562,19 @@ class Stream(object):
         of rows.
 
     """
-        assert(isinstance(column_number, int))
+        assert isinstance(column_number, int)
         try:
             start_index = np.searchsorted(
-                [row[column_number] for row in self.recent[:self.stop]], value)
+                [row[column_number] for row in self.recent[: self.stop]], value
+            )
             if start_index >= self.stop:
                 return -1
             else:
                 return start_index
         except:
-            print ('Error in get_index_for_column_value in Stream.py')
-            print ('column_number = {}'.format(column_number))
-            print ('value =', {}).format(value)
+            print("Error in get_index_for_column_value in Stream.py")
+            print("column_number = {}".format(column_number))
+            print("value =", {}).format(value)
             raise
 
     def _set_up_next_recent(self):
@@ -588,19 +600,18 @@ class Stream(object):
         # there is space available, then we can only
         # retain elements that fill the space.
         if num_retain_in_memory > self.num_in_memory:
-            num_retain_in_memory = self.num_in_memory 
+            num_retain_in_memory = self.num_in_memory
         # Shift the most recent num_retain_in_memory elements in
         # the stream to start of the buffer.
         num_shift = self.stop - num_retain_in_memory
-        self.recent[:num_retain_in_memory] = \
-          self.recent[num_shift : self.stop]
+        self.recent[:num_retain_in_memory] = self.recent[num_shift : self.stop]
         self.offset += num_shift
         self.stop = num_retain_in_memory
         # Zero out the unused part of self.recent. This step isn't
         # necessary; however, doing so helps in debugging. If an
         # agent reads a list of zeros then the agent is probably
         # reading an uninitialized part of the stream
-        self.recent[self.stop:] = [0]*(len(self.recent) - self.stop)
+        self.recent[self.stop :] = [0] * (len(self.recent) - self.stop)
 
         # A reader reading the value in a slot j in the old recent
         # will now read the same value in slot (j - num_shift) in the
@@ -616,77 +627,104 @@ class Stream(object):
                 # to this reader.
                 self.num_elements_lost[reader] -= self.start[reader]
                 self.start[reader] = 0
-                
+
     # Operator overloading
     def operator_overload(self, another_stream, func):
         from ..agent_types.merge import zip_map
+
         output_stream = Stream()
-        zip_map(func=func,
-                in_streams=[self, another_stream],
-                out_stream=output_stream)
+        zip_map(func=func, in_streams=[self, another_stream], out_stream=output_stream)
         return output_stream
 
     # Overload stream operation for add
     def __add__(self, another_stream):
-        def add_pair(pair): return pair[0] + pair[1]
+        def add_pair(pair):
+            return pair[0] + pair[1]
+
         return self.operator_overload(another_stream, func=add_pair)
 
     # Overload stream operation for subtract
     def __sub__(self, another_stream):
-        def subtract(pair): return pair[0] - pair[1]
+        def subtract(pair):
+            return pair[0] - pair[1]
+
         return self.operator_overload(another_stream, func=subtract)
 
     # Overload stream operation for multiply
     def __mul__(self, another_stream):
-        def multiply(pair): return pair[0] * pair[1]
+        def multiply(pair):
+            return pair[0] * pair[1]
+
         return self.operator_overload(another_stream, func=multiply)
 
     # Overload stream operation for modulus.
     def __mod__(self, another_stream):
-        def modulus(pair): return pair[0] % pair[1]
+        def modulus(pair):
+            return pair[0] % pair[1]
+
         return self.operator_overload(another_stream, func=modulus)
 
     def __div__(self, another_stream):
-        def division(pair): return pair[0] / pair[1]
+        def division(pair):
+            return pair[0] / pair[1]
+
         return self.operator_overload(another_stream, func=division)
 
     def __floordiv__(self, another_stream):
-        def floor_division(pair): return pair[0] // pair[1]
-        return self.operator_overload(another_stream,
-                                      func=floor_division)
+        def floor_division(pair):
+            return pair[0] // pair[1]
+
+        return self.operator_overload(another_stream, func=floor_division)
 
     def __lt__(self, another_stream):
-        def less_than(pair): return pair[0] < pair[1]
+        def less_than(pair):
+            return pair[0] < pair[1]
+
         return self.operator_overload(another_stream, func=less_than)
 
     def __le__(self, another_stream):
-        def less_than_or_equal(pair): return pair[0] <= pair[1]
+        def less_than_or_equal(pair):
+            return pair[0] <= pair[1]
+
         return self.operator_overload(another_stream, func=less_than_or_equal)
 
     def __eq__(self, another_stream):
-        def equality(pair): return pair[0] == pair[1]
+        def equality(pair):
+            return pair[0] == pair[1]
+
         return self.operator_overload(another_stream, func=equality)
 
     def __ne__(self, another_stream):
-        def inequality(pair): return pair[0] != pair[1]
+        def inequality(pair):
+            return pair[0] != pair[1]
+
         return self.operator_overload(another_stream, func=inequality)
 
     def __gt__(self, another_stream):
-        def greater_than(pair): return pair[0] > pair[1]
+        def greater_than(pair):
+            return pair[0] > pair[1]
+
         return self.operator_overload(another_stream, func=greater_than)
 
     def __le__(self, another_stream):
-        def greater_than_or_equal(pair): return pair[0] >= pair[1]
+        def greater_than_or_equal(pair):
+            return pair[0] >= pair[1]
+
         return self.operator_overload(another_stream, func=greater_than_or_equal)
 
-    
-#----------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------
 #    NumPy Arrays
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 class StreamArray(Stream):
-    def __init__(self, name="NoName",
-                 dimension=0, dtype=float, initial_value=None,
-                 num_in_memory=DEFAULT_NUM_IN_MEMORY):
+    def __init__(
+        self,
+        name="NoName",
+        dimension=0,
+        dtype=float,
+        initial_value=None,
+        num_in_memory=DEFAULT_NUM_IN_MEMORY,
+    ):
         """
         A StreamArray is a version of Stream treated as a NumPy array.
         The buffer, recent, is a NumPy array.
@@ -732,19 +770,21 @@ class StreamArray(Stream):
             each element of the stream is a 2 X 2 NumPy array of floats.
 
         """
-        
-        assert(isinstance(num_in_memory, int) and num_in_memory > 0)
-        assert((isinstance(dimension, int) and dimension >=0) or
-               ((isinstance(dimension, tuple) or
-                isinstance(dimension, list) or
-                isinstance(dimension, np.ndarray) and
-                all(isinstance(v, int) and v > 0 for v in dimension)))
-               )
+
+        assert isinstance(num_in_memory, int) and num_in_memory > 0
+        assert (isinstance(dimension, int) and dimension >= 0) or (
+            (
+                isinstance(dimension, tuple)
+                or isinstance(dimension, list)
+                or isinstance(dimension, np.ndarray)
+                and all(isinstance(v, int) and v > 0 for v in dimension)
+            )
+        )
         self.num_in_memory = num_in_memory
         self.name = name
         self.dimension = dimension
         self.dtype = dtype
-        self.recent = self._create_recent(2*num_in_memory)
+        self.recent = self._create_recent(2 * num_in_memory)
         self._begin = 0
         self.offset = 0
         self.stop = 0
@@ -769,7 +809,7 @@ class StreamArray(Stream):
             d = list(self.dimension)
             d.insert(0, size)
             return np.zeros(d, self.dtype)
-        
+
     def append(self, value):
         """
         Parameters
@@ -811,81 +851,99 @@ class StreamArray(Stream):
 
         if len(output_array) == 0:
             return
-        
+
         # output_array should be an array.
         if isinstance(output_array, list) or isinstance(output_array, tuple):
             output_array = remove_novalue_and_open_multivalue(output_array)
             output_array = np.array(output_array)
 
-        assert(isinstance(output_array, np.ndarray)), 'Exending stream array, {0}, ' \
-        ' with an object, {1}, that is not an array.'.format(
-            self.name, output_array)
+        assert isinstance(output_array, np.ndarray), (
+            "Exending stream array, {0}, "
+            " with an object, {1}, that is not an array.".format(
+                self.name, output_array
+            )
+        )
 
         # output_array has an arbitrary (positive) number of rows.
         # Each row must be of the same type as an element of this
         # StreamArray. Each row of output_array is inserted into
         # the StreamArray.
 
-        #----------------------------------------------
+        # ----------------------------------------------
         # Check types of the rows of output_array.
-        assert(isinstance(output_array, np.ndarray)),\
-          'Expect extension of a numpy stream, {0}, to be a numpy array,'\
-          'not {1}'.format(self.name, output_array)
+        assert isinstance(output_array, np.ndarray), (
+            "Expect extension of a numpy stream, {0}, to be a numpy array,"
+            "not {1}".format(self.name, output_array)
+        )
 
         # Check the type of the output array.
-        assert(output_array.dtype  == self.dtype),\
-          'StreamArray {0} of type {1} is being extended by {2}' \
-          ' which has an incompatible type {3}'.format(
-              self.name, self.dtype, output_array, output_array.dtype)
+        assert output_array.dtype == self.dtype, (
+            "StreamArray {0} of type {1} is being extended by {2}"
+            " which has an incompatible type {3}".format(
+                self.name, self.dtype, output_array, output_array.dtype
+            )
+        )
 
         # Check dimensions of the array.
         # If dimension is 0 then output_array must be a 1-D array. Equivalently
         # the number of "columns" of this array must be 1.
-        #if self.dimension == 0:
+        # if self.dimension == 0:
         if self.dimension == 0 or self.dimension == 1:
-            assert(len(output_array.shape) == 1),\
-              'Extending StreamArray {0} which has shape (i.e. dimension) 0' \
-              ' by an array with incompatible shape {1}'.\
-              format(self.name, output_array.shape[1:])
+            assert len(output_array.shape) == 1, (
+                "Extending StreamArray {0} which has shape (i.e. dimension) 0"
+                " by an array with incompatible shape {1}".format(
+                    self.name, output_array.shape[1:]
+                )
+            )
 
         ## If dimension is a positive integer, then output_array must be a 2-D
         # If dimension is 2 or higher, then output_array must be a 2-D
         # numpy array, where the number of columns is dimension.
         if isinstance(self.dimension, int) and self.dimension > 1:
             # output_array.shape[1] is the number of columns in output_array.
-            assert (len(output_array.shape) > 0), \
-              'Extending StreamArray {0} which has shape (i.e. dimesion) {1}'\
-                ' with an array with incompatible shape {2}'.\
-                format(self.name, self.dimension, output_array.shape)
-            assert (len(output_array.shape[1:]) > 0), \
-              'Extending StreamArray {0} which has shape (i.e. dimesion) {1}'\
-                ' with an array with incompatible shape {2}'.\
-                format(self.name, self.dimension, output_array.shape[1])
-            assert (output_array.shape[1:][0] == self.dimension),\
-                'Extending StreamArray {0} which has shape (i.e. dimension) {1}'\
-                ' with an array with incompatible shape {2}'.\
-                format(self.name, self.dimension, output_array.shape[1:][0])
-                
+            assert len(output_array.shape) > 0, (
+                "Extending StreamArray {0} which has shape (i.e. dimesion) {1}"
+                " with an array with incompatible shape {2}".format(
+                    self.name, self.dimension, output_array.shape
+                )
+            )
+            assert len(output_array.shape[1:]) > 0, (
+                "Extending StreamArray {0} which has shape (i.e. dimesion) {1}"
+                " with an array with incompatible shape {2}".format(
+                    self.name, self.dimension, output_array.shape[1]
+                )
+            )
+            assert output_array.shape[1:][0] == self.dimension, (
+                "Extending StreamArray {0} which has shape (i.e. dimension) {1}"
+                " with an array with incompatible shape {2}".format(
+                    self.name, self.dimension, output_array.shape[1:][0]
+                )
+            )
+
         # If dimension is a tuple, list or array, then output_array is a numpy array
         # whose dimensions are output_array.shape[1:].
         # The number of elements entered into the stream is output_array.shape[0:].
         # The dimension of each row of output_array must be the same as the
         # dimension of the entire stream.
-        if (isinstance(self.dimension, tuple) or
-            isinstance(self.dimension, list) or
-            isinstance(self.dimension, np.ndarray)):
-            assert(output_array.shape[1:] == self.dimension),\
-                'Extending StreamArray {0} which has shape (i.e. dimesion) {1}'\
-                ' with an array with incompatible shape {2}'.\
-                format(self.name, self.dimension, output_array.shape[1:])
+        if (
+            isinstance(self.dimension, tuple)
+            or isinstance(self.dimension, list)
+            or isinstance(self.dimension, np.ndarray)
+        ):
+            assert output_array.shape[1:] == self.dimension, (
+                "Extending StreamArray {0} which has shape (i.e. dimesion) {1}"
+                " with an array with incompatible shape {2}".format(
+                    self.name, self.dimension, output_array.shape[1:]
+                )
+            )
 
         # Finished checking types of elements of output_array
-        #----------------------------------------------
+        # ----------------------------------------------
 
         # Append output_array to the stream. Same for StreamArray and Stream classes.
         if self.stop + len(output_array) >= len(self.recent):
             self._set_up_next_recent()
-        self.recent[self.stop: self.stop+len(output_array)] = output_array
+        self.recent[self.stop : self.stop + len(output_array)] = output_array
         self.stop += len(output_array)
         self.wakeup_subscribers()
         ## for subscriber in self.subscribers_set:
@@ -896,47 +954,59 @@ class StreamArray(Stream):
 
     def get_contents_after_time(self, start_time):
         try:
-            start_index = np.searchsorted(self.recent[:self.stop]['time'], start_time)
+            start_index = np.searchsorted(self.recent[: self.stop]["time"], start_time)
             if start_index >= self.stop:
                 return np.zeros(0, dtype=self.dtype)
             else:
-                return self.recent[start_index:self.stop]
+                return self.recent[start_index : self.stop]
         except:
-            print ('start_time ='.format(start_time))
-            print ('self.dtype ='.format(self.dtype))
+            print("start_time =".format(start_time))
+            print("self.dtype =".format(self.dtype))
             raise
         return
 
     # Operator overloading for addition, subtraction, multiplication.
     def operator_overload(self, another_stream, func):
         from ..agent_types.merge import merge_list
-        assert another_stream.dimension == self.dimension, \
-          'Both stream arrays must have the same dimension.' \
-          'The dimensions are {0} and {1}'.format(
-              self.dimension, another_stream.dimension)
-        assert another_stream.dtype == self.dtype, \
-          'Both stream arrays must have the same dtype.' \
-          'The dtypes are {0} and {1}'.format(
-              self.dtype, another_stream.dtype)
+
+        assert another_stream.dimension == self.dimension, (
+            "Both stream arrays must have the same dimension."
+            "The dimensions are {0} and {1}".format(
+                self.dimension, another_stream.dimension
+            )
+        )
+        assert another_stream.dtype == self.dtype, (
+            "Both stream arrays must have the same dtype."
+            "The dtypes are {0} and {1}".format(self.dtype, another_stream.dtype)
+        )
         output_stream = StreamArray(dimension=self.dimension, dtype=self.dtype)
-        merge_list(func=func,
-                in_streams=[self, another_stream],
-                out_stream=output_stream)
+        merge_list(
+            func=func, in_streams=[self, another_stream], out_stream=output_stream
+        )
         return output_stream
-        
+
     def __add__(self, another_stream):
-        def add_pair(pair): return pair[0] + pair[1]
+        def add_pair(pair):
+            return pair[0] + pair[1]
+
         return self.operator_overload(another_stream, func=add_pair)
 
     def __sub__(self, another_stream):
-        def sub_pair(pair): return pair[0] - pair[1]
+        def sub_pair(pair):
+            return pair[0] - pair[1]
+
         return self.operator_overload(another_stream, func=sub_pair)
 
     def __mul__(self, another_stream):
-        def mul_pair(pair): return pair[0] * pair[1]
+        def mul_pair(pair):
+            return pair[0] * pair[1]
+
         return self.operator_overload(another_stream, func=mul_pair)
 
 
-#------------------------------------------------------------------------------
-def run(): Stream.scheduler.step()
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+def run():
+    Stream.scheduler.step()
+
+
+# ------------------------------------------------------------------------------

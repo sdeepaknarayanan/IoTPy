@@ -18,24 +18,28 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # stream is in ../../IoTPy/core
 from stream import Stream
+
 # op is in ../../IoTPy/agent_types
 from op import map_element, map_window
+
 # recent_values is in ../../IoTPy/helper_functions
 from recent_values import recent_values
+
 # helper_control, basics, run are in ../../IoTPy/helper_functions
 from helper_control import _no_value
 from basics import map_e, fmap_e, map_w, fmap_w
 from run import run
 
 import copy
-from probables import (HeavyHitters)
+from probables import HeavyHitters
+
 
 @fmap_e
 def ggg(element, heavy_hitters_object):
-    if element is 'heavy_hitters':
+    if element is "heavy_hitters":
         return copy.copy(heavy_hitters_object.heavy_hitters)
     function_name, obj = element
-    if function_name == 'add':
+    if function_name == "add":
         heavy_hitters_object.add(obj)
     else:
         # The only functions supported here are heavy_hitters
@@ -44,8 +48,7 @@ def ggg(element, heavy_hitters_object):
     return _no_value
 
 
-def heavy_hitters_stream(
-        in_stream, out_stream, heavy_hitters_object):
+def heavy_hitters_stream(in_stream, out_stream, heavy_hitters_object):
     """
     Parameters
     ----------
@@ -62,11 +65,12 @@ def heavy_hitters_stream(
        heavy_hitters_object: HeavyHitters
           An instance of HeavyHitters.
     """
+
     def func(element):
-        if element is 'heavy_hitters':
+        if element is "heavy_hitters":
             return copy.copy(heavy_hitters_object.heavy_hitters)
         function_name, obj = element
-        if function_name == 'add':
+        if function_name == "add":
             heavy_hitters_object.add(obj)
         else:
             # The only functions supported here are heavy_hitters
@@ -75,11 +79,9 @@ def heavy_hitters_stream(
         return _no_value
 
     map_element(func, in_stream, out_stream)
-            
 
-def heavy_hitters_window(
-        in_stream, window_size,
-        heavy_hitters_object):
+
+def heavy_hitters_window(in_stream, window_size, heavy_hitters_object):
     """
     Parameters
     ----------
@@ -95,29 +97,45 @@ def heavy_hitters_window(
        heavy_hitters_object: HeavyHitters
           An instance of HeavyHitters.
     """
+
     @fmap_w
     def f(window):
         for element in window:
             heavy_hitters_object.add(element)
         return copy.copy(heavy_hitters_object.heavy_hitters)
+
     return f(in_stream, window_size, step_size=window_size)
-    #map_window(f, in_stream, out_stream, window_size, step_size=window_size)
-    
+    # map_window(f, in_stream, out_stream, window_size, step_size=window_size)
+
+
 def test_heavy_hitters_window():
     heavy_hitters_object = HeavyHitters(width=1000, depth=5)
-    x = Stream('input')
+    x = Stream("input")
     ## y = Stream('output')
     window_size = 4
     y = heavy_hitters_window(x, window_size, heavy_hitters_object)
-    #heavy_hitters_window(x, y, window_size, heavy_hitters_object)
-    x.extend(['a', 'a', 'a', 'b',
-              # next window
-              'a', 'b', 'c', 'a',
-              # next window
-              'b', 'c', 'b', 'b'])
+    # heavy_hitters_window(x, y, window_size, heavy_hitters_object)
+    x.extend(
+        [
+            "a",
+            "a",
+            "a",
+            "b",
+            # next window
+            "a",
+            "b",
+            "c",
+            "a",
+            # next window
+            "b",
+            "c",
+            "b",
+            "b",
+        ]
+    )
     run()
-    #Stream.scheduler.step()
-    print (recent_values(y))
+    # Stream.scheduler.step()
+    print(recent_values(y))
     # Output will be:
     # [{'a': 3, 'b': 1},
     # After next window
@@ -125,26 +143,41 @@ def test_heavy_hitters_window():
     # After next window
     # {'a': 5, 'c': 2, 'b': 5}]
 
+
 def test_heavy_hitters_stream():
     heavy_hitters_object = HeavyHitters(width=1000, depth=5)
-    x = Stream('input')
+    x = Stream("input")
     ## y = Stream('output')
     y = ggg(x, heavy_hitters_object=heavy_hitters_object)
-    #heavy_hitters_stream(x, y, heavy_hitters_object)
-    x.extend([('add', 'a'), ('add', 'a'), ('add', 'a'), ('add', 'b'),
-              ('heavy_hitters'),
-              ('add', 'a'), ('add', 'b'), ('add', 'c'), ('add', 'a'),
-              ('heavy_hitters'),
-              ('add', 'b'), ('add', 'c'), ('add', 'b'), ('add', 'b'),
-              ('heavy_hitters')])
+    # heavy_hitters_stream(x, y, heavy_hitters_object)
+    x.extend(
+        [
+            ("add", "a"),
+            ("add", "a"),
+            ("add", "a"),
+            ("add", "b"),
+            ("heavy_hitters"),
+            ("add", "a"),
+            ("add", "b"),
+            ("add", "c"),
+            ("add", "a"),
+            ("heavy_hitters"),
+            ("add", "b"),
+            ("add", "c"),
+            ("add", "b"),
+            ("add", "b"),
+            ("heavy_hitters"),
+        ]
+    )
     run()
-    #Stream.scheduler.step()
-    print (recent_values(y))
+    # Stream.scheduler.step()
+    print(recent_values(y))
     # Output will be:
     # [{'a': 3, 'b': 1},
     # {'A': 5, 'c': 1, 'b': 2},
     # {'a': 5, 'c': 2, 'b': 5}]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_heavy_hitters_window()
     test_heavy_hitters_stream()

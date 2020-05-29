@@ -1,6 +1,7 @@
 import scipy.signal
 import numpy as np
 import sys
+
 """
 This module shows how to use map_element in IoTPy
 to build a library of classes for filtering streams
@@ -21,14 +22,18 @@ sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
 from generate_waves import generate_sine_wave, plot_signal
+
 # stream is in ../../IoTPy/core
 from stream import Stream, StreamArray
+
 # op, merge are in ../../IoTPy/agent_types
 from op import map_window_list, map_element
 from merge import merge_window
+
 # recent_values is in ../../IoTPy/helper_functions
 from recent_values import recent_values
 from basics import merge_w
+
 # window_dot_product is in .
 from window_dot_product import window_dot_product
 
@@ -53,6 +58,7 @@ def reverse_array(b):
         reverse_b[i] = b[M - 1 - i]
     return reverse_b
 
+
 def bandpass_FIR(in_stream, out_stream, b):
     """
     Creates an agent that executes a
@@ -75,6 +81,7 @@ def bandpass_FIR(in_stream, out_stream, b):
     """
     reverse_b = reverse_array(b)
     window_dot_product(in_stream, out_stream, multiplicand_vector=reverse_b)
+
 
 def bandpass_IIR(in_stream, out_stream, b, a):
     """
@@ -121,18 +128,25 @@ def bandpass_IIR(in_stream, out_stream, b, a):
     # Create the agent.
     # Note that the output stream of the agent gets fed back as an
     # input stream.
-    f(in_streams=[in_stream, out_stream], out_stream=out_stream,
-      window_size=M, step_size=1, b=reverse_b, a=reverse_a)
+    f(
+        in_streams=[in_stream, out_stream],
+        out_stream=out_stream,
+        window_size=M,
+        step_size=1,
+        b=reverse_b,
+        a=reverse_a,
+    )
 
-#---------------------------------------------------------------
-#---------------------------------------------------------------
+
+# ---------------------------------------------------------------
+# ---------------------------------------------------------------
 #     EXAMPLES OF CLASS BASED FILTERS
-#---------------------------------------------------------------
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
+# ---------------------------------------------------------------
 
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 # FILTER BASE CLASS
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 class Filter(object):
     """
     The base class of filters that filter input streams to
@@ -162,6 +176,7 @@ class Filter(object):
       y and x have the same structure.
 
     """
+
     def __init__(self, b, a=None):
         self.b = np.array(b)
         if a is not None:
@@ -192,9 +207,10 @@ class Filter(object):
         """
         map_element(self.filter_element, in_stream, out_stream)
 
-#---------------------------------------------------------------
+
+# ---------------------------------------------------------------
 # CLASS BANDPASS IIR FILTER
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 class BP_IIR(Filter):
     """
     Bandpass IIR (Infinite Impulse Response) Filter.
@@ -206,6 +222,7 @@ class BP_IIR(Filter):
           or other sources.
 
     """
+
     def __init__(self, b, a):
         Filter.__init__(self, b, a)
 
@@ -218,22 +235,21 @@ class BP_IIR(Filter):
         """
         # Insert a new value -- element --- into x.
         # First shift x to the right by 1.
-        self.x[1:] = self.x[:- 1]
+        self.x[1:] = self.x[:-1]
         self.x[0] = element
-        
+
         # Insert a new value into y.
         # First shift y to the right by 1.
         self.y[1:] = self.y[:-1]
         # Compute new value for y[0]
         self.y[0] = self.b[0] * self.x[0]
-        self.y[0] += sum(self.b[1:]*self.x[1:] -
-                         self.a[1:]*self.y[1:])
+        self.y[0] += sum(self.b[1:] * self.x[1:] - self.a[1:] * self.y[1:])
         return self.y[0]
 
 
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 # CLASS BANDPASS FIR FILTER
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 class BP_FIR(Filter):
     """
     Bandpass FIR (Finite Impulse Response) Filter.
@@ -245,6 +261,7 @@ class BP_FIR(Filter):
           or other sources.
 
     """
+
     def __init__(self, b):
         Filter.__init__(self, b)
 
@@ -257,13 +274,14 @@ class BP_FIR(Filter):
         """
         # Accomodate new entry, element, in input
         # stream x.
-        self.x[1:] = self.x[:- 1]
+        self.x[1:] = self.x[:-1]
         self.x[0] = element
         return np.sum(self.b * self.x)
 
-#---------------------------------------------------------------
+
+# ---------------------------------------------------------------
 #  GET FILTER PARAMETERS
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 # See scipy.signal for a library of filters.
 def butter_bandpass(lowcut, highcut, fs, order=2):
     """
@@ -271,9 +289,10 @@ def butter_bandpass(lowcut, highcut, fs, order=2):
     butter() is from scipy.signal
 
     """
-    lowcut, highcut = lowcut*2.0/fs, highcut*2.0/fs
-    b, a = butter(order, [lowcut, highcut], btype='band')
+    lowcut, highcut = lowcut * 2.0 / fs, highcut * 2.0 / fs
+    b, a = butter(order, [lowcut, highcut], btype="band")
     return b, a
+
 
 def fir_bandpass(lowcut, highcut, fs):
     """
@@ -281,39 +300,45 @@ def fir_bandpass(lowcut, highcut, fs):
     firwin() is from scipy.signal
 
     """
-    lowcut, highcut =lowcut*2.0/fs, highcut*2.0/fs
-    b =  firwin(
-        numtaps=201, cutoff = [lowcut, highcut],
-        window='blackmanharris', pass_zero=False)
-    return b 
+    lowcut, highcut = lowcut * 2.0 / fs, highcut * 2.0 / fs
+    b = firwin(
+        numtaps=201, cutoff=[lowcut, highcut], window="blackmanharris", pass_zero=False
+    )
+    return b
 
 
-#----------------------------------------------------------------
+# ----------------------------------------------------------------
 #       TESTS
-#----------------------------------------------------------------
+# ----------------------------------------------------------------
 def generate_test_waves(
-        low_frequency, medium_frequency, high_frequency,
-        max_amplitude, phase_shift, sample_rate, time_duration):
+    low_frequency,
+    medium_frequency,
+    high_frequency,
+    max_amplitude,
+    phase_shift,
+    sample_rate,
+    time_duration,
+):
     # Generate streams of waves with different frequencies,
     # amplitudes and phase shifts. Each wave is a pure
     # frequency. Return a wave that combines frequencies.
     wave_data_low_frequency = generate_sine_wave(
-        low_frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration)
+        low_frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     wave_data_medium_frequency = generate_sine_wave(
-        medium_frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration)
+        medium_frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     wave_data_high_frequency = generate_sine_wave(
-        high_frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration)
+        high_frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     # Generate a wave that is the sum of pure-frequency
     # waves.
-    return (wave_data_low_frequency +
-            wave_data_medium_frequency +
-            wave_data_high_frequency)
-    
-def drive_input_and_plot_output(
-        input_signal, x, y):
+    return (
+        wave_data_low_frequency + wave_data_medium_frequency + wave_data_high_frequency
+    )
+
+
+def drive_input_and_plot_output(input_signal, x, y):
     # Put data into the input stream of the filter.
     x.extend(input_signal)
     # Run a step and plot output.
@@ -331,8 +356,8 @@ def drive_input_and_plot_output(
     plt.subplot(212)
     plt.plot(after_filtering_data)
     plt.show()
-    
-    
+
+
 def setup_parameters():
     """
     This test generates waves with low, medium and high
@@ -352,84 +377,90 @@ def setup_parameters():
     # filter.
     fs, order, lowcut, highcut = 50.0, 2, 1.0, 5.0
     input_signal = generate_test_waves(
-        low_frequency=0.25, medium_frequency=2.5, high_frequency=15.0,
-        max_amplitude=1, phase_shift=0.0, sample_rate=fs,
-        time_duration=10.0)
+        low_frequency=0.25,
+        medium_frequency=2.5,
+        high_frequency=15.0,
+        max_amplitude=1,
+        phase_shift=0.0,
+        sample_rate=fs,
+        time_duration=10.0,
+    )
 
     return fs, order, lowcut, highcut, input_signal
+
 
 def test_bandpass_IIR_filter():
     # Set up parameters
     fs, order, lowcut, highcut, input_signal = setup_parameters()
-    x = StreamArray('x')
-    y = StreamArray('y')
-    # Create bandpass filter 
+    x = StreamArray("x")
+    y = StreamArray("y")
+    # Create bandpass filter
     b, a = butter_bandpass(lowcut, highcut, fs, order)
     BP_IIR(b, a).filter_stream(in_stream=x, out_stream=y)
     # Plot output
     drive_input_and_plot_output(input_signal, x, y)
 
+
 def test_bandpass_FIR_filter():
     # Set up parameters
     fs, order, lowcut, highcut, input_signal = setup_parameters()
-    x = StreamArray('x')
-    y = StreamArray('y')
+    x = StreamArray("x")
+    y = StreamArray("y")
     # Create a bandpass filter.
     b = fir_bandpass(lowcut, highcut, fs)
     BP_FIR(b).filter_stream(in_stream=x, out_stream=y)
     # Plot output
     drive_input_and_plot_output(input_signal, x, y)
-    
+
+
 def test_bandpass_FIR_filter_simple():
     # Set up parameters
     fs, order, lowcut, highcut, input_signal = setup_parameters()
-    x = StreamArray('x')
-    y = StreamArray('y')
+    x = StreamArray("x")
+    y = StreamArray("y")
     # Create a bandpass filter.
     b = fir_bandpass(lowcut, highcut, fs)
     bandpass_FIR(in_stream=x, out_stream=y, b=b)
     # Plot output
     drive_input_and_plot_output(input_signal, x, y)
 
+
 def test_bandpass_IIR_filter_simple():
     # Set up parameters
     fs, order, lowcut, highcut, input_signal = setup_parameters()
-    x = StreamArray('x')
-    y = StreamArray('y')
+    x = StreamArray("x")
+    y = StreamArray("y")
     # Create a bandpass filter.
     b, a = butter_bandpass(lowcut, highcut, fs, order)
     bandpass_IIR(in_stream=x, out_stream=y, b=b, a=a)
     # Plot output
     drive_input_and_plot_output(input_signal, x, y)
-    
 
-#------------------------------------------------------------------
+
+# ------------------------------------------------------------------
 #  TESTS
-#------------------------------------------------------------------
-if __name__ == '__main__':
-    print ('TESTING BANDPASS IIR FILTER')
-    print ('You will see a plot of the filter output.')
-    print ('Please close the plot.')
+# ------------------------------------------------------------------
+if __name__ == "__main__":
+    print("TESTING BANDPASS IIR FILTER")
+    print("You will see a plot of the filter output.")
+    print("Please close the plot.")
     test_bandpass_IIR_filter()
-    print ('TEST OF BANDPASS IIR FILTER IS SUCCESSFUL')
+    print("TEST OF BANDPASS IIR FILTER IS SUCCESSFUL")
     print
-    print ('TESTING BANDPASS FIR FILTER')
-    print ('You will see a plot of the filter output.')
-    print ('Please close the plot.')
+    print("TESTING BANDPASS FIR FILTER")
+    print("You will see a plot of the filter output.")
+    print("Please close the plot.")
     test_bandpass_FIR_filter()
-    print ('TEST OF BANDPASS FIR FILTER IS SUCCESSFUL')
+    print("TEST OF BANDPASS FIR FILTER IS SUCCESSFUL")
     print
-    print ('TESTING BANDPASS FIR FILTER SIMPLE')
-    print ('You will see a plot of the filter output.')
-    print ('Please close the plot.')
+    print("TESTING BANDPASS FIR FILTER SIMPLE")
+    print("You will see a plot of the filter output.")
+    print("Please close the plot.")
     test_bandpass_FIR_filter_simple()
-    print ('TEST OF BANDPASS FIR FILTER SIMPLE IS SUCCESSFUL')
+    print("TEST OF BANDPASS FIR FILTER SIMPLE IS SUCCESSFUL")
     print
-    print ('TESTING BANDPASS IIR FILTER SIMPLE')
-    print ('You will see a plot of the filter output.')
-    print ('Please close the plot.')
+    print("TESTING BANDPASS IIR FILTER SIMPLE")
+    print("You will see a plot of the filter output.")
+    print("Please close the plot.")
     test_bandpass_IIR_filter_simple()
-    print ('TEST OF BANDPASS IIR FILTER SIMPLE IS SUCCESSFUL')
-    
-    
-    
+    print("TEST OF BANDPASS IIR FILTER SIMPLE IS SUCCESSFUL")

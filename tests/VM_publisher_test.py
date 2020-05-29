@@ -22,15 +22,18 @@ result.dat after the subscriber terminates will be 0, 1, ..., 9.
 
 import sys
 import os
+
 sys.path.append(os.path.abspath("../multiprocessing"))
 sys.path.append(os.path.abspath("../agent_types"))
 
-#from multicore import shared_memory_process
+# from multicore import shared_memory_process
 from distributed import distributed_process
 from VM import VM
 from op import map_element
-#from source import source_func_to_stream
+
+# from source import source_func_to_stream
 from source import source_list_to_stream
+
 
 def single_process_publisher():
     # This VM has a single process called proc_0.
@@ -38,7 +41,7 @@ def single_process_publisher():
     # 'in' and a single output stream called 'out'. See
     # in_stream_names=['in'], out_stream_names=['out'].
     # It has a single source thread which puts elements
-    # of source_list into the stream called 'in'. 
+    # of source_list into the stream called 'in'.
     # The process has no actuators, and so connect_actuators
     # is empty. See connect_sources=[('in', source)],
     # connect_actuators=[].
@@ -53,28 +56,31 @@ def single_process_publisher():
     # multicore machine; so, connections is the empty list.
 
     source_list = range(10)
+
     def source(out_stream):
-        return source_list_to_stream(
-            source_list, out_stream, time_interval=0.01)
+        return source_list_to_stream(source_list, out_stream, time_interval=0.01)
 
     def compute_func(in_streams, out_streams):
         map_element(
-            func=lambda x: x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
+            func=lambda x: x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     proc_0 = distributed_process(
         compute_func=compute_func,
-        in_stream_names=['in'], out_stream_names=['out'],
-        connect_sources=[('in', source)],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
+        connect_sources=[("in", source)],
         connect_actuators=[],
-        name='proc_0')
+        name="proc_0",
+    )
 
     vm_0 = VM(
         processes=[proc_0],
         connections=[],
-        publishers=[(proc_0, 'out', 'copy_of_source_list')])
+        publishers=[(proc_0, "out", "copy_of_source_list")],
+    )
     vm_0.start()
 
-if __name__ == '__main__':
-     single_process_publisher()
+
+if __name__ == "__main__":
+    single_process_publisher()

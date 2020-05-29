@@ -4,6 +4,7 @@ This module has examples of @map_e and @fmap_e
 """
 import sys
 import os
+
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
@@ -11,10 +12,13 @@ sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
 # stream, helper_control are in IoTPy/IoTPy/core
 from stream import Stream, _no_value, _multivalue, run
 from helper_control import _no_value, _multivalue
+
 # basics is in IoTPy/IoTPy/agent_types
 from basics import map_e, fmap_e, map_list
+
 # recent_values is in IoTPy/IoTPy/helper_functions
 from recent_values import recent_values
+
 
 def examples():
     # --------------------------------------------
@@ -22,9 +26,12 @@ def examples():
 
     # Specify agent functions
     @fmap_e
-    def twice(v): return 2*v
+    def twice(v):
+        return 2 * v
+
     @map_e
-    def double(v): return 2*v
+    def double(v):
+        return 2 * v
 
     # Create streams
     x = Stream()
@@ -42,8 +49,8 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(z) == [2*v for v in DATA]
-    assert recent_values(y) == [2*v for v in DATA]
+    assert recent_values(z) == [2 * v for v in DATA]
+    assert recent_values(y) == [2 * v for v in DATA]
     # --------------------------------------------
 
     # --------------------------------------------
@@ -52,13 +59,16 @@ def examples():
 
     # Specify agent functions
     @map_e
-    def g(v, addend): return v + addend
+    def g(v, addend):
+        return v + addend
+
     @fmap_e
-    def h(v, addend): return v + addend
+    def h(v, addend):
+        return v + addend
 
     # Create streams
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # keyword argument is addend
@@ -74,7 +84,7 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [v+ADDEND for v in DATA]
+    assert recent_values(y) == [v + ADDEND for v in DATA]
     assert recent_values(y) == recent_values(z)
     # --------------------------------------------
 
@@ -84,17 +94,20 @@ def examples():
 
     # Specify agent functions
     @map_e
-    def multiply(v, multiplicand): return v * multiplicand
+    def multiply(v, multiplicand):
+        return v * multiplicand
+
     @fmap_e
-    def times(v, multiplicand): return v * multiplicand
+    def times(v, multiplicand):
+        return v * multiplicand
 
     # Create streams
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # keyword argument is multiplicand
-    MULTIPLICAND=10
+    MULTIPLICAND = 10
     # Relational form: multiply(in_stream=x, out_stream=y, **kwargs)
     multiply(x, y, multiplicand=MULTIPLICAND)
     # Functional form: Create stream z. times(in_stream=x, **kwargs)
@@ -106,7 +119,7 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [v*MULTIPLICAND for v in DATA]
+    assert recent_values(y) == [v * MULTIPLICAND for v in DATA]
     assert recent_values(y) == recent_values(z)
     # --------------------------------------------
 
@@ -119,12 +132,14 @@ def examples():
         difference = input_value - state
         next_state = input_value
         return difference, next_state
+
     @fmap_e
-    def increments(u, v): return u - v, u
+    def increments(u, v):
+        return u - v, u
 
     # Create streams
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # Initial state is 0.
@@ -141,9 +156,7 @@ def examples():
     assert recent_values(y) == [0, 1, 4, 16]
     assert recent_values(y) == recent_values(z)
     # --------------------------------------------
-    
 
-    
     # --------------------------------------------
     # Examples @map_e and @fmap_e with state
 
@@ -152,14 +165,15 @@ def examples():
     def g(v, state):
         next_state = state + 1
         return v + state, next_state
+
     @fmap_e
     def h(v, state):
         next_state = state + 1
         return v + state, next_state
 
     # Create streams
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # Initial state is 0.
@@ -174,8 +188,7 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [
-        0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
+    assert recent_values(y) == [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
     assert recent_values(y) == recent_values(z)
     # --------------------------------------------
 
@@ -188,14 +201,15 @@ def examples():
     def g(v, state, addend):
         next_state = state + 1
         return v + addend + state, next_state
+
     @fmap_e
     def h(v, state, addend):
         next_state = state + 1
         return v + addend + state, next_state
 
     # Create streams.
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # Initial state is 0, keyword argument is addend
@@ -210,8 +224,7 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [
-        10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
+    assert recent_values(y) == [10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
     assert recent_values(y) == recent_values(z)
     # --------------------------------------------
 
@@ -225,6 +238,7 @@ def examples():
         next_state = v
         next_output = True if delta > max_change else False
         return next_output, next_state
+
     @fmap_e
     def big_change(v, state, max_change):
         delta = v - state
@@ -233,8 +247,8 @@ def examples():
         return next_output, next_state
 
     # Create streams.
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
 
     # Create agents
     # Initial state is 0, keyword argument is max_change
@@ -250,10 +264,8 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [
-        False, False, True, True, False, True, False]
+    assert recent_values(y) == [False, False, True, True, False, True, False]
     assert recent_values(y) == recent_values(z)
-
 
     # --------------------------------------------
     # Example @fmap_e with keyword arguments and state
@@ -277,17 +289,17 @@ def examples():
         # Specify agent functions.
         @fmap_e
         def f(v, state, a):
-            next_state = (v if state is 'empty'
-                          else (1.0-a)*state + a*v)
+            next_state = v if state is "empty" else (1.0 - a) * state + a * v
             return next_state, next_state
 
         # return an agent specification
-        return f(x, state='empty', a=a)
+        return f(x, state="empty", a=a)
+
     # Finished definition of exponential_smoothing()
 
     # Create streams x, y and create the network of agents
     # specified by the function exponential_smoothing()
-    x = Stream('x')
+    x = Stream("x")
     y = exponential_smoothing(x, a=0.5)
 
     # Put data into input streams and run
@@ -307,10 +319,10 @@ def examples():
     # Specify agent functions.
     @fmap_e
     def h(v):
-        return _no_value if v%2 else v
+        return _no_value if v % 2 else v
 
     # Create streams.
-    x = Stream('x')
+    x = Stream("x")
 
     # Create agents and stream z.
     z = h(x)
@@ -321,9 +333,8 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(z) == [v for v in DATA if not v%2 ]
-    assert recent_values(z) == [
-        0, 2, 4, 6, 8]
+    assert recent_values(z) == [v for v in DATA if not v % 2]
+    assert recent_values(z) == [0, 2, 4, 6, 8]
     # --------------------------------------------
 
     # --------------------------------------------
@@ -333,12 +344,15 @@ def examples():
 
     # Specify agent functions.
     @fmap_e
-    def h(v): return _multivalue(v)
+    def h(v):
+        return _multivalue(v)
+
     @fmap_e
-    def g(v): return v
+    def g(v):
+        return v
 
     # Create streams.
-    x = Stream('x')
+    x = Stream("x")
 
     # Create streams z, y and create the network of agents
     # specified by the functions h() and g().
@@ -346,14 +360,12 @@ def examples():
     y = g(x)
 
     # Put data into input streams and run
-    x.extend([('hello', 'Hola'), ('bye', 'adios')])
+    x.extend([("hello", "Hola"), ("bye", "adios")])
     run()
 
     # Check results.
-    assert recent_values(z) == [
-       'hello', 'Hola', 'bye', 'adios']
-    assert recent_values(y) == [
-        ('hello', 'Hola'), ('bye', 'adios')]
+    assert recent_values(z) == ["hello", "Hola", "bye", "adios"]
+    assert recent_values(y) == [("hello", "Hola"), ("bye", "adios")]
     # --------------------------------------------
 
     # --------------------------------------------
@@ -362,7 +374,7 @@ def examples():
     # Specify agent functions.
     @fmap_e
     def h(v):
-        return _multivalue((v, v+10)) if v%2 else _no_value
+        return _multivalue((v, v + 10)) if v % 2 else _no_value
 
     # Create streams.
     s = Stream()
@@ -377,19 +389,18 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(t) == [
-        1, 11, 3, 13, 5, 15, 7, 17, 9, 19]
+    assert recent_values(t) == [1, 11, 3, 13, 5, 15, 7, 17, 9, 19]
     # --------------------------------------------
 
-    
     # --------------------------------------------
 
     # Specify class and create an object of this class.
     class add(object):
         def __init__(self, addend):
             self.addend = addend
+
         def func(self, v):
-            return _multivalue((v, v+self.addend)) if v%2 else _no_value
+            return _multivalue((v, v + self.addend)) if v % 2 else _no_value
 
     add_object = add(10)
 
@@ -424,20 +435,22 @@ def examples():
             self.max_value = max_value
             self.count = 0
             self.total = 0.0
+
         def f(self, v):
             v = min(v, self.max_value)
             self.total += v
             self.count += 1
-            return self.total/float(self.count)
+            return self.total / float(self.count)
 
     c = average(max_value=10)
 
     # Specify agent functions.
     @fmap_e
-    def avg(v): return c.f(v)
+    def avg(v):
+        return c.f(v)
 
     # Create streams.
-    x = Stream('x')
+    x = Stream("x")
 
     # Create stream y and create the network of agents
     # specified by the function avg().
@@ -448,9 +461,9 @@ def examples():
     run()
 
     # Check results.
-    assert recent_values(y) == [
-        1, 4, 6, 5]
+    assert recent_values(y) == [1, 4, 6, 5]
     # --------------------------------------------
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     examples()

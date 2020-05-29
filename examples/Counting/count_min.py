@@ -20,17 +20,18 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # stream is in ../../IoTPy/core
 from stream import Stream
+
 # op is in ../../IoTPy/agent_types
 from op import map_window
+
 # recent_values is in ../../IoTPy/helper_functions
 from recent_values import recent_values
 
 import copy
-from probables import (HeavyHitters)
+from probables import HeavyHitters
 
-def heavy_hitters_stream(
-        in_stream, out_stream, window_size,
-        heavy_hitters_object):
+
+def heavy_hitters_stream(in_stream, out_stream, window_size, heavy_hitters_object):
     """
     Parameters
     ----------
@@ -46,23 +47,39 @@ def heavy_hitters_stream(
        heavy_hitters_object: HeavyHitters
           An instance of HeavyHitters.
     """
+
     def f(window):
         for element in window:
             heavy_hitters_object.add(element)
         return copy.copy(heavy_hitters_object.heavy_hitters)
+
     map_window(f, in_stream, out_stream, window_size, step_size=window_size)
-    
+
+
 def test_heavy_hitters():
     heavy_hitters_object = HeavyHitters(width=1000, depth=5)
-    x = Stream('input')
-    y = Stream('output')
+    x = Stream("input")
+    y = Stream("output")
     window_size = 4
     heavy_hitters_stream(x, y, window_size, heavy_hitters_object)
-    x.extend(['a', 'a', 'a', 'b',
-              # next window
-              'a', 'b', 'c', 'a',
-              # next window
-              'b', 'c', 'b', 'b'])
+    x.extend(
+        [
+            "a",
+            "a",
+            "a",
+            "b",
+            # next window
+            "a",
+            "b",
+            "c",
+            "a",
+            # next window
+            "b",
+            "c",
+            "b",
+            "b",
+        ]
+    )
     Stream.scheduler.step()
     print recent_values(y)
     # Output will be:
@@ -72,5 +89,6 @@ def test_heavy_hitters():
     # After next window
     # {'a': 5, 'c': 2, 'b': 5}]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_heavy_hitters()

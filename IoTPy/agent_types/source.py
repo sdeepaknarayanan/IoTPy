@@ -42,14 +42,29 @@ import time
 import threading
 
 from ..core.stream import Stream
+
 # agent, stream, are in ../core
 from ..helper_functions.recent_values import recent_values
+
 # recent_values is present in ../helper_functions
-from .check_agent_parameter_types import check_source_function_arguments, check_source_file_arguments
+from .check_agent_parameter_types import (
+    check_source_function_arguments,
+    check_source_file_arguments,
+)
+
 # check_agent_parameter_types is is the current directory
-    
-def func_to_q(func, q, state=None, sleep_time=0, num_steps=None,
-              name='source_to_q', *args, **kwargs):
+
+
+def func_to_q(
+    func,
+    q,
+    state=None,
+    sleep_time=0,
+    num_steps=None,
+    name="source_to_q",
+    *args,
+    **kwargs
+):
     """
     Value returned by func is appended to the queue q
 
@@ -73,27 +88,33 @@ def func_to_q(func, q, state=None, sleep_time=0, num_steps=None,
             The thread that repeatedly calls function.
            
     """
+
     def thread_target(func, q, state, sleep_time, num_steps, args, kwargs):
         if num_steps is None:
             while True:
-                output = func(*args, **kwargs) if state is None else \
-                  func(state, *args, **kwargs)
+                output = (
+                    func(*args, **kwargs)
+                    if state is None
+                    else func(state, *args, **kwargs)
+                )
                 q.put(output)
                 time.sleep(sleep_time)
         else:
             for _ in range(num_steps):
-                output = func(*args, **kwargs) if state is None else \
-                  func(state, *args, **kwargs)
+                output = (
+                    func(*args, **kwargs)
+                    if state is None
+                    else func(state, *args, **kwargs)
+                )
                 q.put(output)
                 time.sleep(sleep_time)
 
-    return (
-        threading.Thread(
-        target=thread_target,
-        args=(func, q, state, sleep_time, num_steps, args, kwargs)))
-                
+    return threading.Thread(
+        target=thread_target, args=(func, q, state, sleep_time, num_steps, args, kwargs)
+    )
 
-def q_to_streams(q, out_streams, name='thread_q_to_streams'):
+
+def q_to_streams(q, out_streams, name="thread_q_to_streams"):
     """
     Parameters
     ----------
@@ -113,22 +134,22 @@ def q_to_streams(q, out_streams, name='thread_q_to_streams'):
     name_to_stream: dict. key: stream_name. value: stream
        
     """
-    name_to_stream = {stream.name:stream for stream in out_streams}
+    name_to_stream = {stream.name: stream for stream in out_streams}
+
     def thread_target(q, name_to_stream):
         while True:
             v = q.get()
-            if v == '_close':
+            if v == "_close":
                 break
             stream_name, new_data_for_stream = v
             stream = name_to_stream[stream_name]
             stream.append(new_data_for_stream)
         return
-    
-    return (
-        threading.Thread(target=thread_target, args=(q, name_to_stream)))
+
+    return threading.Thread(target=thread_target, args=(q, name_to_stream))
 
 
-def q_to_streams_general(q, func, name='thread_q_to_streams'):
+def q_to_streams_general(q, func, name="thread_q_to_streams"):
     """
     Identical to q_to_streams except that a stream is identified by the
     descriptor attached to each message in the queue. The descriptor need
@@ -154,23 +175,32 @@ def q_to_streams_general(q, func, name='thread_q_to_streams'):
 
        
     """
+
     def thread_target(q, name_to_stream):
         while True:
             v = q.get()
-            if v == '_close':
+            if v == "_close":
                 break
             # Each message is a tuple: (stream descriptor, msg content)
             stream_descriptor, new_data_for_stream = v
             stream = func(stream_descriptor)
             stream.append(new_data_for_stream)
         return
-    return (
-        threading.Thread(target=thread_target, args=(q, name_to_stream)))
+
+    return threading.Thread(target=thread_target, args=(q, name_to_stream))
 
 
 def source_func_to_stream(
-        func, out_stream, time_interval=0, num_steps=None, window_size=1,
-        state=None, name='source_f', *args, **kwargs):
+    func,
+    out_stream,
+    time_interval=0,
+    num_steps=None,
+    window_size=1,
+    state=None,
+    name="source_f",
+    *args,
+    **kwargs
+):
     """
     Puts (out_stream.name, v) on the scheduler queue where v is the value
     returned by func. The scheduler gets these pairs from the queue and
@@ -218,18 +248,18 @@ def source_func_to_stream(
     """
     stream_name = out_stream.name
     check_source_function_arguments(
-        func, stream_name, time_interval, num_steps, window_size,
-        state, name)
+        func, stream_name, time_interval, num_steps, window_size, state, name
+    )
     scheduler = Stream.scheduler
 
     def thread_target(
-            func, stream_name, time_interval,
-            num_steps, window_size, state, args, kwargs):
+        func, stream_name, time_interval, num_steps, window_size, state, args, kwargs
+    ):
         """
         thread_target is the function executed by the thread.
         """
 
-        #-----------------------------------------------------------------
+        # -----------------------------------------------------------------
         def get_output_list_and_next_state(state):
             """
             This function returns a list of length window_size and the
@@ -253,8 +283,7 @@ def source_func_to_stream(
                 if next_state is not None:
                     # func has a single argument, state,
                     # apart from *args, **kwargs
-                    output_increment, next_state = func(
-                        next_state, *args, **kwargs)
+                    output_increment, next_state = func(next_state, *args, **kwargs)
                 else:
                     # func has no arguments apart from
                     # *args, **kwargs
@@ -262,9 +291,10 @@ def source_func_to_stream(
                 output_list.append(output_increment)
             # Finished computing output_list of length window_size
             return output_list, next_state
-        #-----------------------------------------------------------------
+
+        # -----------------------------------------------------------------
         # End of def get_output_list_and_next_state(state)
-        #-----------------------------------------------------------------
+        # -----------------------------------------------------------------
 
         if num_steps is None:
             while True:
@@ -280,21 +310,38 @@ def source_func_to_stream(
                 time.sleep(time_interval)
         return
 
-    #------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # End of def thread_target(...)
-    #------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
-    return (
-        threading.Thread(
-            target=thread_target,
-            args=(func, stream_name, time_interval, num_steps,
-              window_size, state, args, kwargs)))
+    return threading.Thread(
+        target=thread_target,
+        args=(
+            func,
+            stream_name,
+            time_interval,
+            num_steps,
+            window_size,
+            state,
+            args,
+            kwargs,
+        ),
+    )
+
 
 def source_file_to_stream(
-        func, out_stream, filename, time_interval=0,
-        num_steps=None, window_size=1, state=None, name='source_file_to_stream',
-        *args, **kwargs):
-    
+    func,
+    out_stream,
+    filename,
+    time_interval=0,
+    num_steps=None,
+    window_size=1,
+    state=None,
+    name="source_file_to_stream",
+    *args,
+    **kwargs
+):
+
     """
     Applies function func to each line in the file with name filename
     and puts the pair (out_stream.name, v) on the scheduler input
@@ -343,16 +390,24 @@ def source_file_to_stream(
 
     """
 
-    #-----------------------------------------------------------------
+    # -----------------------------------------------------------------
     stream_name = out_stream.name
     check_source_file_arguments(
-        func, stream_name, filename, time_interval,
-        num_steps, window_size, state, name)
+        func, stream_name, filename, time_interval, num_steps, window_size, state, name
+    )
     scheduler = Stream.scheduler
 
-    def thread_target(func, stream_name, filename, time_interval,
-                      num_steps, window_size, state,
-                      args, kwargs):
+    def thread_target(
+        func,
+        stream_name,
+        filename,
+        time_interval,
+        num_steps,
+        window_size,
+        state,
+        args,
+        kwargs,
+    ):
         """
         This is the function executed by the thread.
         
@@ -360,7 +415,7 @@ def source_file_to_stream(
         num_lines_read_in_current_window = 0
         num_steps_taken = 0
         output_list_for_current_window = []
-        with open(filename, 'r') as input_file:
+        with open(filename, "r") as input_file:
             for line in input_file:
                 # Append to the output list for the current window
                 # the incremental output returned by a function call.
@@ -368,8 +423,7 @@ def source_file_to_stream(
                 # file as an argument and the function returns the
                 # increment and the next state.
                 if state is not None:
-                    output_increment, state = func(
-                        line, state, *args, **kwargs)
+                    output_increment, state = func(line, state, *args, **kwargs)
                 else:
                     output_increment = func(line, *args, **kwargs)
                 output_list_for_current_window.append(output_increment)
@@ -386,21 +440,35 @@ def source_file_to_stream(
                 if num_steps is not None and num_steps_taken >= num_steps:
                     break
         return
- 
-    #------------------------------------------------------------------------
-    # End of def thread_target(...)
-    #------------------------------------------------------------------------
 
-    return (
-        threading.Thread(
-            target=thread_target,
-            args=(func, stream_name, filename, time_interval, num_steps,
-                  window_size, state, args, kwargs)))
+    # ------------------------------------------------------------------------
+    # End of def thread_target(...)
+    # ------------------------------------------------------------------------
+
+    return threading.Thread(
+        target=thread_target,
+        args=(
+            func,
+            stream_name,
+            filename,
+            time_interval,
+            num_steps,
+            window_size,
+            state,
+            args,
+            kwargs,
+        ),
+    )
 
 
 def source_list_to_stream(
-        in_list, out_stream, time_interval=0, num_steps=None, window_size=1,
-        name='source_list_to_stream'):
+    in_list,
+    out_stream,
+    time_interval=0,
+    num_steps=None,
+    window_size=1,
+    name="source_list_to_stream",
+):
     """
     Puts elements of the list on to the scheduler's input queue. The scheduler
     reads the queue and appends the elements to out_stream.
@@ -408,11 +476,21 @@ def source_list_to_stream(
     """
     if num_steps is None:
         num_steps = len(in_list)
+
     def read_list_func(state, in_list):
-        return in_list[state], state+1
+        return in_list[state], state + 1
+
     return source_func_to_stream(
-        read_list_func, out_stream, time_interval, num_steps,
-        window_size, state=0, name=name, in_list=in_list)
+        read_list_func,
+        out_stream,
+        time_interval,
+        num_steps,
+        window_size,
+        state=0,
+        name=name,
+        in_list=in_list,
+    )
+
 
 class SourceList(object):
     """
@@ -443,22 +521,33 @@ class SourceList(object):
       Name of the thread in which this source runs.
 
     """
+
     def __init__(
-            self, in_list,
-            time_interval=0.0, num_steps=None,
-            window_size=1, state=None,
-            name='source_list.source.func'):  
+        self,
+        in_list,
+        time_interval=0.0,
+        num_steps=None,
+        window_size=1,
+        state=None,
+        name="source_list.source.func",
+    ):
         self.in_list = in_list
         self.time_interval = time_interval
-        self.num_steps=num_steps
-        self.window_size=window_size
+        self.num_steps = num_steps
+        self.window_size = window_size
         self.state = state
         self.name = name
+
     def source_func(self, out_stream):
         return source_list_to_stream(
-            self.in_list, out_stream, self.time_interval,
-            self.num_steps, self.window_size, self.name)
-    
+            self.in_list,
+            out_stream,
+            self.time_interval,
+            self.num_steps,
+            self.window_size,
+            self.name,
+        )
+
 
 class source_file(object):
     """
@@ -499,24 +588,37 @@ class source_file(object):
       Name of the thread in which this source runs.
 
     """
+
     def __init__(
-            self, filename, parse_line,
-            time_interval=0.0, num_steps=None,
-            window_size=1, state=None,
-            name='source_file.source.func'):  
+        self,
+        filename,
+        parse_line,
+        time_interval=0.0,
+        num_steps=None,
+        window_size=1,
+        state=None,
+        name="source_file.source.func",
+    ):
         self.filename = filename
         self.parse_line = parse_line
         self.time_interval = time_interval
-        self.num_steps=num_steps
-        self.window_size=window_size
+        self.num_steps = num_steps
+        self.window_size = window_size
         self.state = state
         self.name = name
+
     def source_func(self, out_stream):
         return source_file_to_stream(
-            self.parse_line, out_stream,
-            self.filename, self.time_interval,
-            self.num_steps, self.window_size, self.state,
-            self.name)
+            self.parse_line,
+            out_stream,
+            self.filename,
+            self.time_interval,
+            self.num_steps,
+            self.window_size,
+            self.state,
+            self.name,
+        )
+
 
 class source_float_file(source_file):
     """
@@ -524,18 +626,16 @@ class source_float_file(source_file):
     float per line.
 
     """
-    def __init__(
-            self, filename,
-            time_interval=0.0, num_steps=None,
-            window_size=1):
+
+    def __init__(self, filename, time_interval=0.0, num_steps=None, window_size=1):
         self.filename = filename
         self.time_interval = time_interval
-        self.num_steps=num_steps
+        self.num_steps = num_steps
         self.window_size = window_size
-        self.name = 'source_float_file'
+        self.name = "source_float_file"
         source_file.__init__(
-            self, filename, lambda v: float(v),
-            time_interval, num_steps, window_size)
+            self, filename, lambda v: float(v), time_interval, num_steps, window_size
+        )
 
 
 class source_int_file(source_file):
@@ -544,18 +644,17 @@ class source_int_file(source_file):
     int per line.
 
     """
-    def __init__(
-            self, filename,
-            time_interval=0.0, num_steps=None,
-            window_size=1):
+
+    def __init__(self, filename, time_interval=0.0, num_steps=None, window_size=1):
         self.filename = filename
         self.time_interval = time_interval
-        self.num_steps=num_steps
+        self.num_steps = num_steps
         self.window_size = window_size
-        self.name = 'source_float_file'
+        self.name = "source_float_file"
         source_file.__init__(
-            self, filename, lambda v: int(v),
-            time_interval, num_steps, window_size)
+            self, filename, lambda v: int(v), time_interval, num_steps, window_size
+        )
+
 
 class source_list(object):
     """
@@ -589,18 +688,30 @@ class source_list(object):
       Name of the thread in which this source runs.
 
     """
+
     def __init__(
-            self, in_list, time_interval=0.0, num_steps=None,
-            window_size=1, name='source_file.source.func'):  
+        self,
+        in_list,
+        time_interval=0.0,
+        num_steps=None,
+        window_size=1,
+        name="source_file.source.func",
+    ):
         self.in_list = in_list
         self.time_interval = time_interval
-        self.num_steps=num_steps
-        self.window_size=window_size
+        self.num_steps = num_steps
+        self.window_size = window_size
         self.name = name
+
     def source_func(self, out_stream):
         return source_list_to_stream(
-            self.in_list, out_stream, self.time_interval,
-            self.num_steps, self.window_size, self.name)
+            self.in_list,
+            out_stream,
+            self.time_interval,
+            self.num_steps,
+            self.window_size,
+            self.name,
+        )
 
 
 class source_function(object):
@@ -636,18 +747,30 @@ class source_function(object):
       Name of the thread in which this source runs.
 
     """
+
     def __init__(
-            self, func, time_interval=0.0, num_steps=None,
-            window_size=1, state=None,
-            name='source_file.source.func'):  
+        self,
+        func,
+        time_interval=0.0,
+        num_steps=None,
+        window_size=1,
+        state=None,
+        name="source_file.source.func",
+    ):
         self.func = func
         self.time_interval = time_interval
-        self.num_steps=num_steps
-        self.window_size=window_size
+        self.num_steps = num_steps
+        self.window_size = window_size
         self.state = state
         self.name = name
+
     def source_func(self, out_stream):
         return source_func_to_stream(
-            self.func, out_stream, self.time_interval,
-            self.num_steps, self.window_size, self.state,
-            self.name)
+            self.func,
+            out_stream,
+            self.time_interval,
+            self.num_steps,
+            self.window_size,
+            self.state,
+            self.name,
+        )

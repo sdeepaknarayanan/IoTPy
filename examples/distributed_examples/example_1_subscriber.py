@@ -18,6 +18,7 @@ Start the subscriber an instant before starting the publisher.
 """
 import sys
 import os
+
 sys.path.append(os.path.abspath("../../IoTPy/multiprocessing"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
@@ -27,24 +28,27 @@ from distributed import distributed_process
 from VM import VM
 from sink import sink_element, stream_to_file
 
-def single_process_subscriber():
 
+def single_process_subscriber():
     def compute_func(in_streams, out_streams):
-        stream_to_file(in_streams[0], 'result.dat')
+        stream_to_file(in_streams[0], "result.dat")
 
     proc_1 = distributed_process(
         compute_func=compute_func,
-        in_stream_names=['in'],
+        in_stream_names=["in"],
         out_stream_names=[],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_1')
+        name="proc_1",
+    )
 
     vm_1 = VM(
         processes=[proc_1],
         connections=[],
-        subscribers=[(proc_1, 'in', 'copy_of_source_list')])
+        subscribers=[(proc_1, "in", "copy_of_source_list")],
+    )
     vm_1.start()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     single_process_subscriber()

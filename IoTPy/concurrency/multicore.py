@@ -7,31 +7,36 @@ TO DO: remove source_keyword_args because you can have multiple
 sources.
 """
 import sys
+
 # Check whether the Python version is 2.x or 3.x
 # If it is 2.x import Queue. If 3.x then import queue.
-is_py2 = sys.version[0] == '2'
+is_py2 = sys.version[0] == "2"
 if is_py2:
     import Queue as queue
 else:
     import queue as queue
 
 import multiprocessing
+
 # multiprocessing.Array provides shared memory that can
 # be shared across processes.
 import threading
 import time
 
 from ..agent_types.sink import sink_list, sink_element
+
 # sink, op are in ../agent_types.
 
 from ..core.compute_engine import ComputeEngine
 from ..core.stream import Stream
-from ..core.system_parameters import  BUFFER_SIZE, MAX_NUM_SOURCES, MAX_NUM_PROCESSES
+from ..core.system_parameters import BUFFER_SIZE, MAX_NUM_SOURCES, MAX_NUM_PROCESSES
+
 # compute_engine, stream and system_parameters are in ../core.
 from .utils import check_processes_connections_format, check_connections_validity
+
 # utils is in current folder.
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 class MulticoreProcess(object):
     """
     MulticoreProcess creates a single process in a multicore application.
@@ -161,6 +166,7 @@ class MulticoreProcess(object):
        a source.
 
     """
+
     def __init__(self, spec, connect_streams, name):
         """
         Parameters
@@ -238,7 +244,7 @@ class MulticoreProcess(object):
         # self.out_stream_names_connected_to_in_streams is
         # the list of output stream names of the process.
         self.in_stream_names_connected_to_out_streams = []
-        self.out_stream_names_connected_to_in_streams =[]
+        self.out_stream_names_connected_to_in_streams = []
         self.get_stream_names_connected_to_streams()
 
         # GET INPUT STREAMS AND CHECK CONNECTEDNESS
@@ -248,59 +254,61 @@ class MulticoreProcess(object):
         # process. Also, every input stream must be connected
         # to an output stream otherwise that input stream will
         # remain empty for ever.
-        if 'inputs' in self.spec:
-            self.inputs = self.spec['inputs']
+        if "inputs" in self.spec:
+            self.inputs = self.spec["inputs"]
         else:
             self.inputs = []
-        assert self.in_stream_names_connected_to_out_streams == \
-          [v[0] for v in self.inputs], \
-          "Input stream = {0}. Streams connected to outputs = {1}".format(
-              self.inputs, self.in_stream_names_connected_to_out_streams)
+        assert self.in_stream_names_connected_to_out_streams == [
+            v[0] for v in self.inputs
+        ], "Input stream = {0}. Streams connected to outputs = {1}".format(
+            self.inputs, self.in_stream_names_connected_to_out_streams
+        )
 
         # GET OUTPUT STREAMS AND CHECK CONNECTEDNESS
         # outputs is a list of out_stream names and their types for
         # the agent associated with the process. It does not include
         # source streams of the process.
-        if 'outputs' in self.spec:
-            self.outputs = self.spec['outputs']
+        if "outputs" in self.spec:
+            self.outputs = self.spec["outputs"]
         else:
             self.outputs = []
-        assert set(self.out_stream_names_connected_to_in_streams) >= \
-          set([v[0] for v in self.outputs]), \
-          "Output streams = {0}. Connections to input streams = {1}".format(
-              self.outputs, self.out_stream_names_connected_to_in_streams)
+        assert set(self.out_stream_names_connected_to_in_streams) >= set(
+            [v[0] for v in self.outputs]
+        ), "Output streams = {0}. Connections to input streams = {1}".format(
+            self.outputs, self.out_stream_names_connected_to_in_streams
+        )
 
         # ---------------------------------------------------------------------
         #  STEP 2: SET DEFAULT VALUES (EMPTY DICT OR LIST) FOR PARAMETERS.
         # ---------------------------------------------------------------------
-        self.agent = self.spec['agent']
-        if 'keyword_args' in self.spec:
-            self.keyword_args = self.spec['keyword_args']
+        self.agent = self.spec["agent"]
+        if "keyword_args" in self.spec:
+            self.keyword_args = self.spec["keyword_args"]
         else:
             self.keyword_args = {}
-        if 'args' in self.spec:
-            self.args = self.spec['args']
+        if "args" in self.spec:
+            self.args = self.spec["args"]
         else:
             self.args = []
-        if 'sources' in self.spec:
-            self.sources = self.spec['sources']
+        if "sources" in self.spec:
+            self.sources = self.spec["sources"]
         else:
             self.sources = []
-            self.spec['sources'] = self.sources
-        if 'source_functions' in self.spec:
-            self.source_functions = self.spec['source_functions']
+            self.spec["sources"] = self.sources
+        if "source_functions" in self.spec:
+            self.source_functions = self.spec["source_functions"]
         else:
             self.source_functions = []
-        if 'threads' in self.spec:
-            self.threads = self.spec['threads']
+        if "threads" in self.spec:
+            self.threads = self.spec["threads"]
         else:
             self.threads = []
         self.source_keyword_args = {}
-        if 'output_queues' in self.spec:
-            self.output_queues = self.spec['output_queues']
+        if "output_queues" in self.spec:
+            self.output_queues = self.spec["output_queues"]
         else:
             self.output_queues = []
-            self.spec['output_queues'] = self.output_queues
+            self.spec["output_queues"] = self.output_queues
         if self.name in self.connections.keys():
             self.out_to_in = self.connections[self.name]
         else:
@@ -315,37 +323,37 @@ class MulticoreProcess(object):
         self.out_to_buffer = {}
         # create a buffer for each out_stream and each source of this process.
         # 1. Create a buffer for each out_stream of this process.
-        # self.out_to_buffer[out_stream_name] becomes the buffer for 
+        # self.out_to_buffer[out_stream_name] becomes the buffer for
         # the stream called out_stream_name.
         # self.outputs is a list of pairs:
         #                   ( out_stream_name, out_stream_type)
         for out_stream_name, out_stream_type in self.outputs:
-            if out_stream_type != 'x':
+            if out_stream_type != "x":
                 buffer = multiprocessing.Array(out_stream_type, BUFFER_SIZE)
                 # buffer_ptr is an integer with initial value of 0.
-                buffer_ptr = multiprocessing.Value('i', 0)
+                buffer_ptr = multiprocessing.Value("i", 0)
             else:
                 # out_stream_type of 'x' means a type that is not allowed
                 # in multiprocessing.Array. So, a buffer of this type cannot
                 # be used to share data across processors. Such a buffer can
                 # only be used in the process in which it is defined.
-                buffer = [0]*BUFFER_SIZE
+                buffer = [0] * BUFFER_SIZE
                 # buffer_ptr is an integer with initial value of 0.
-                buffer_ptr = multiprocessing.Value('i', 0)
-                    
-            self.out_to_buffer[out_stream_name] =  (buffer, buffer_ptr)
-                
+                buffer_ptr = multiprocessing.Value("i", 0)
+
+            self.out_to_buffer[out_stream_name] = (buffer, buffer_ptr)
+
         # 2. Create a buffer for each source of this process.
         # self.out_to_buffer[source_name] is the buffer for the source called
         # source_name
         for source_name, source_type in self.sources:
-            #source_type  = source_type_and_func['type']
-            if source_type != 'x':
+            # source_type  = source_type_and_func['type']
+            if source_type != "x":
                 # This source generates data of a type accepted by
                 # multiprocessing.Array
                 buffer = multiprocessing.Array(source_type, BUFFER_SIZE)
                 # buffer_ptr is a shared integer with initial value of 0.
-                buffer_ptr = multiprocessing.Value('i', 0)
+                buffer_ptr = multiprocessing.Value("i", 0)
             else:
                 # This source feeds a stream inside the same process in
                 # which the source thread runs. This source does not feed
@@ -355,16 +363,16 @@ class MulticoreProcess(object):
                 # tuples.
                 # Note that if source_type == 'x' then buffer is a list and
                 # buffer_ptr is an integer.
-                buffer = [0]*BUFFER_SIZE
+                buffer = [0] * BUFFER_SIZE
                 # buffer_ptr is an integer with initial value of 0.
                 buffer_ptr = 0
-            self.out_to_buffer[source_name] =  (buffer, buffer_ptr)
+            self.out_to_buffer[source_name] = (buffer, buffer_ptr)
 
         # ---------------------------------------------------------------------
         #  STEP 4: MAKE PARAMETERS OF THE PROCESS
         # ---------------------------------------------------------------------
         # threads is a list of thread targets.
-        # out_to_q_and_in_stream_signal_names[out_stream_name] is 
+        # out_to_q_and_in_stream_signal_names[out_stream_name] is
         #    a list of pairs (q, in_stream_signal_name).
         #    where q is the queue of the receiving process and
         #    in_stream_signal_name is 's_signal_' where the
@@ -409,10 +417,10 @@ class MulticoreProcess(object):
         #   have finished.
         self.main_lock = None
         return
-    #-----------------------------------------------------------------
-    # FINISHED __init__()
-    #-----------------------------------------------------------------
 
+    # -----------------------------------------------------------------
+    # FINISHED __init__()
+    # -----------------------------------------------------------------
 
     def make_in_to_out(self, procs, connections):
         """
@@ -443,7 +451,9 @@ class MulticoreProcess(object):
                         # to the in_stream called in_stream_name in THIS
                         # process.
                         self.in_to_out[in_stream_name] = (
-                            out_process_name, out_stream_name)
+                            out_process_name,
+                            out_stream_name,
+                        )
                         # Get the sending process
                         out_process = procs[out_process_name]
                         # Get the output buffer in which data from the sending
@@ -493,7 +503,8 @@ class MulticoreProcess(object):
             for receiver_proc_name, in_stream_name in receivers:
                 receiver_proc = procs[receiver_proc_name]
                 self.out_to_q_and_in_stream_signal_names[out_stream_name].append(
-                    (receiver_proc.in_queue, in_stream_name + '_signal_'))
+                    (receiver_proc.in_queue, in_stream_name + "_signal_")
+                )
 
         # 2. Create q_and_in_stream_signal_names for each source of this process.
         # self.out_to_q_and_in_stream_signal_names[name] is the
@@ -512,9 +523,9 @@ class MulticoreProcess(object):
                 #     are sent to the stream called in_stream_name + '_signal_'
                 #     in the receiver process.
                 self.out_to_q_and_in_stream_signal_names[source_name].append(
-                    (receiver_proc.in_queue, in_stream_name + '_signal_'))
+                    (receiver_proc.in_queue, in_stream_name + "_signal_")
+                )
         return
-
 
     def create_in_streams_of_agent(self):
         # Create the in_streams of agent from their names:
@@ -531,13 +542,17 @@ class MulticoreProcess(object):
 
     def get_stream_names_connected_to_streams(self):
         for four_tuple in self.connect_streams:
-            (sender_process_name, out_stream_name,
-             receiver_process_name, in_stream_name) = four_tuple
+            (
+                sender_process_name,
+                out_stream_name,
+                receiver_process_name,
+                in_stream_name,
+            ) = four_tuple
             if receiver_process_name == self.name:
                 self.in_stream_names_connected_to_out_streams.append(in_stream_name)
             if sender_process_name == self.name:
                 self.out_stream_names_connected_to_in_streams.append(out_stream_name)
-            
+
     def create_in_stream_signals_for_C_datatypes(self):
         # in_stream_signals is a list of input streams, with
         # one in_stream_signal for each in_stream.
@@ -551,7 +566,7 @@ class MulticoreProcess(object):
             if not in_stream_name in self.in_stream_names_connected_to_out_streams:
                 continue
 
-            in_stream_signal_name = in_stream_name + '_signal_'
+            in_stream_signal_name = in_stream_name + "_signal_"
             in_stream_signal = Stream(name=in_stream_signal_name)
             self.in_stream_signals.append(in_stream_signal)
             # name_to_stream is a dict where
@@ -580,8 +595,9 @@ class MulticoreProcess(object):
             # STEP 2: Make agent that copies out_stream to the in_streams to
             # which it is connected. The input stream to this agent is out_stream.
             # stream_name is a keyword argument of copy_stream().
-            sink_list(func=self.copy_stream, in_stream=out_stream,
-                      stream_name=out_stream_name)
+            sink_list(
+                func=self.copy_stream, in_stream=out_stream, stream_name=out_stream_name
+            )
 
     def create_agents_to_copy_buffers_to_in_streams(self):
         # For each in_stream of this process, create an agent that
@@ -597,7 +613,7 @@ class MulticoreProcess(object):
         for in_stream_name, in_stream_type in self.inputs:
             if not in_stream_name in self.in_stream_names_connected_to_out_streams:
                 continue
-            in_stream_signal_name = in_stream_name + '_signal_'
+            in_stream_signal_name = in_stream_name + "_signal_"
             # Get the in_stream_signal stream from its name.
             in_stream_signal = self.name_to_stream[in_stream_signal_name]
             # Get the in_stream from its name
@@ -609,8 +625,10 @@ class MulticoreProcess(object):
                 func=copy_buffer_segment,
                 in_stream=in_stream_signal,
                 out_stream=in_stream,
-                buffer=buffer, in_stream_type=in_stream_type)
-        
+                buffer=buffer,
+                in_stream_type=in_stream_type,
+            )
+
     def create_source_threads(self):
         """
         threads is a list of thread targets.
@@ -619,12 +637,12 @@ class MulticoreProcess(object):
         self.source_threads = []
         for source_function in self.source_functions:
             self.source_threads.append(
-                threading.Thread(target=source_function, args=(self,)))
+                threading.Thread(target=source_function, args=(self,))
+            )
 
-
-    #---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     # MAKE THE PROCESS.
-    #---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     def make_process(self):
         def target():
             """
@@ -659,8 +677,8 @@ class MulticoreProcess(object):
             self.create_agents_to_copy_buffers_to_in_streams()
             # CREATE THE COMPUTE AGENT FOR THIS PROCESS.
             self.agent(
-                self.in_streams, self.out_streams,
-                *self.args, **self.keyword_args)
+                self.in_streams, self.out_streams, *self.args, **self.keyword_args
+            )
 
             # CREATE A NEW STREAM.SCHEDULER FOR THIS PROCESS
             # Specify the scheduler, input_queue and name_to_stream for
@@ -680,26 +698,30 @@ class MulticoreProcess(object):
             # process. The scheduler thread gets a ready agent from the in_queue of
             # this process and then executes the next step of the agent.
             Stream.scheduler.start()
-            for thread in self.threads: thread.start()
-            for thread in self.source_threads: thread.start()
+            for thread in self.threads:
+                thread.start()
+            for thread in self.source_threads:
+                thread.start()
 
             # JOIN SOURCE THREADS AND JOIN SCHEDULER.
-            for thread in self.source_threads: thread.join()
+            for thread in self.source_threads:
+                thread.join()
             Stream.scheduler.join()
             # Put '_finished' on each of the output queues so that threads getting
             # messages from these output queues can terminate upon getting a
             # '_finished' message instead of hanging.
             for output_queue in self.output_queues:
-                output_queue.put('_finished')
-            for thread in self.threads: thread.join()
+                output_queue.put("_finished")
+            for thread in self.threads:
+                thread.join()
             return
 
         # Create the process.
         self.process = multiprocessing.Process(target=target)
 
-    #---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     # COPY DATA FROM A BUFFER INTO A STREAM.
-    #---------------------------------------------------------------------
+    # ---------------------------------------------------------------------
     def copy_stream(self, data, stream_name):
         """
         This function extends a source stream, called stream_name with
@@ -731,13 +753,15 @@ class MulticoreProcess(object):
         """
         # STEP 1: GET BUFFER, QUEUE, STREAMS CONNECTED TO THIS STREAM
         buffer, buffer_ptr = self.out_to_buffer[stream_name]
-        q_and_in_stream_signal_names = \
-            self.out_to_q_and_in_stream_signal_names[stream_name]
+        q_and_in_stream_signal_names = self.out_to_q_and_in_stream_signal_names[
+            stream_name
+        ]
 
         # STEP 2: COPY DATA INTO THE CIRCULAR BUFFER
         n = len(data)
-        assert n < BUFFER_SIZE, \
-          "The length of input data is greater than the buffer size"
+        assert (
+            n < BUFFER_SIZE
+        ), "The length of input data is greater than the buffer size"
         if isinstance(buffer_ptr, int):
             # This buffer is for a local stream.
             # This buffer is a list and not a multiprocessing.Array
@@ -751,7 +775,7 @@ class MulticoreProcess(object):
         if buffer_end_ptr < BUFFER_SIZE:
             # In this case, don't need to wrap around the
             # end of the buffer.
-            buffer[buffer_current_ptr : buffer_end_ptr] = data
+            buffer[buffer_current_ptr:buffer_end_ptr] = data
         else:
             # In this case, must wrap around the end of
             # the circular buffer.
@@ -760,13 +784,13 @@ class MulticoreProcess(object):
             remaining_space = BUFFER_SIZE - buffer_end_ptr
             # Copy remaining_space elements of the list
             # to fill up the buffer.
-            buffer[buffer_current_ptr:] =  data[:remaining_space]
+            buffer[buffer_current_ptr:] = data[:remaining_space]
             # That leaves n-remaining_space elements of the
             # list that are yet to be copied into the buffer.
             # Copy the remaining elements of list into the
             # buffer starting from slot 0.
-            buffer[:n-remaining_space] = data[remaining_space:]
-            buffer_end_ptr = n-remaining_space
+            buffer[: n - remaining_space] = data[remaining_space:]
+            buffer_end_ptr = n - remaining_space
 
         # STEP 3: TELL THE RECEIVER PROCESSES THAT THEY HAVE NEW
         # DATA.
@@ -803,7 +827,6 @@ class MulticoreProcess(object):
             buffer_ptr.value = buffer_end_ptr
         return
 
-
     def broadcast(self, receiver_stream_name, msg):
         for process_name in self.all_process_specs.keys():
             this_process = self.all_procs[process_name]
@@ -824,11 +847,13 @@ class MulticoreProcess(object):
         # To detect termination in pubsub use algorithm from ChandyMisra.
         this_source_id = self.source_ids[self.name][stream_name]
         self.source_status[this_source_id] = 0
-        self.broadcast('source_finished', (self.name, stream_name))
+        self.broadcast("source_finished", (self.name, stream_name))
 
-#-----------------------------------------------------------------------    
+
+# -----------------------------------------------------------------------
 # FINISHED class MulticoreProcess
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+
 
 def make_spec_from_multicore_specification(multicore_specification):
     """
@@ -844,19 +869,26 @@ def make_spec_from_multicore_specification(multicore_specification):
     # Give names no_name_0, no_name_1, ... for unnamed processes.
     num_unnamed_processes = 0
     for p_spec in processes_spec:
-        if 'name' in p_spec:
-            process_name = p_spec['name']
+        if "name" in p_spec:
+            process_name = p_spec["name"]
         else:
-            p_spec['name'] = 'no_name_' + str(num_unnamed_processes)
+            p_spec["name"] = "no_name_" + str(num_unnamed_processes)
             num_unnamed_processes += 1
-        assert 'agent' in p_spec.keys()
-        if not 'inputs' in p_spec: p_spec['inputs'] = []
-        if not 'outputs' in p_spec: p_spec['outputs'] = []
-        if not 'args' in p_spec: p_spec['args'] = []
-        if not 'args' in p_spec: p_spec['kwargs'] = {}
-        if not 'sources' in p_spec: p_spec['sources'] = []
-        if not 'queues' in p_spec: p_spec['queues'] = []
-        if not 'state' in p_spec: p_spec['state'] = None
+        assert "agent" in p_spec.keys()
+        if not "inputs" in p_spec:
+            p_spec["inputs"] = []
+        if not "outputs" in p_spec:
+            p_spec["outputs"] = []
+        if not "args" in p_spec:
+            p_spec["args"] = []
+        if not "args" in p_spec:
+            p_spec["kwargs"] = {}
+        if not "sources" in p_spec:
+            p_spec["sources"] = []
+        if not "queues" in p_spec:
+            p_spec["queues"] = []
+        if not "state" in p_spec:
+            p_spec["state"] = None
 
     # --------------------------------------------------------
     # Set up connect_streams which is a list of 4-tuples
@@ -872,12 +904,12 @@ def make_spec_from_multicore_specification(multicore_specification):
         # Find which unique process outputs this stream.
         process_outputting_stream = None
         for p_spec in processes_spec:
-            if stream_name in p_spec['outputs']:
+            if stream_name in p_spec["outputs"]:
                 assert process_outputting_stream == None
-                process_outputting_stream = p_spec['name']
-            if stream_name in p_spec['sources']:
+                process_outputting_stream = p_spec["name"]
+            if stream_name in p_spec["sources"]:
                 assert process_outputting_stream == None
-                process_outputting_stream = p_spec['name']
+                process_outputting_stream = p_spec["name"]
         assert process_outputting_stream != None
         # ---------------------------------------------
 
@@ -885,10 +917,15 @@ def make_spec_from_multicore_specification(multicore_specification):
         # Find which processes (possibly more than one) inputs
         # this stream.
         for p_spec in processes_spec:
-            if stream_name in p_spec['inputs']:
+            if stream_name in p_spec["inputs"]:
                 connect_streams.append(
-                    (process_outputting_stream, stream_name,
-                     p_spec['name'], stream_name))
+                    (
+                        process_outputting_stream,
+                        stream_name,
+                        p_spec["name"],
+                        stream_name,
+                    )
+                )
         # ---------------------------------------------
 
     # --------------------------------------------------------
@@ -903,19 +940,20 @@ def make_spec_from_multicore_specification(multicore_specification):
     # pairs: (stream name, stream type).
     # We want to do the same for 'outputs' and 'sources.
     for p_spec in processes_spec:
-        for category in ['inputs', 'outputs', 'sources']:
+        for category in ["inputs", "outputs", "sources"]:
             category_stream_names = p_spec[category]
             stream_names_and_types = []
             for category_stream_name in category_stream_names:
                 found_category_stream_name = False
                 for stream_name, stream_type in streams_spec:
                     if category_stream_name == stream_name:
-                        stream_names_and_types.append(
-                            (stream_name, stream_type))
+                        stream_names_and_types.append((stream_name, stream_type))
                         found_category_stream_name = True
-                assert found_category_stream_name, \
-                  "Stream name {0} is not in list of streams {1}".format(
-                      stream_name, streams_spec)
+                assert (
+                    found_category_stream_name
+                ), "Stream name {0} is not in list of streams {1}".format(
+                    stream_name, streams_spec
+                )
             # Replace the list of stream names by a list of pairs
             # (stream name, stream type)
             p_spec[category] = stream_names_and_types
@@ -924,12 +962,13 @@ def make_spec_from_multicore_specification(multicore_specification):
     # a dict of dict with the keyword being the process name
     processes_dict = {}
     for p_spec in processes_spec:
-        processes_dict[p_spec['name']] = p_spec
+        processes_dict[p_spec["name"]] = p_spec
         # delete the 'name' key from the inner dict
-        del processes_dict[p_spec['name']]['name']
+        del processes_dict[p_spec["name"]]["name"]
     return connect_streams, processes_dict
 
-#-------------------------------------------------------------------
+
+# -------------------------------------------------------------------
 def make_connections_from_connect_streams(connect_streams):
     """
     Converts from the format of connect_streams to the format of
@@ -951,21 +990,23 @@ def make_connections_from_connect_streams(connect_streams):
             # Create dict and then enter the first tuple
             # (receiver_process, in_stream) into empty list.
             connections[sender_process] = {}
-            connections[sender_process][out_stream] = \
-              [(receiver_process, in_stream)]
+            connections[sender_process][out_stream] = [(receiver_process, in_stream)]
         else:
             if not out_stream in connections[sender_process].keys():
                 # Enter the first tuple (receiver_process, in_stream)
                 # into an empty list.
-                connections[sender_process][out_stream] = \
-                  [(receiver_process, in_stream)]
+                connections[sender_process][out_stream] = [
+                    (receiver_process, in_stream)
+                ]
             else:
                 # Append tuple to the existing list.
                 connections[sender_process][out_stream].append(
-                    (receiver_process, in_stream))
+                    (receiver_process, in_stream)
+                )
     return connections
-    
-#-------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
 def copy_buffer_segment(message, out_stream, buffer, in_stream_type):
     """
     copy_buffer_segment() is the function executed by the agent
@@ -992,15 +1033,20 @@ def copy_buffer_segment(message, out_stream, buffer, in_stream_type):
         return_value = multiprocessing.Array(in_stream_type, range(segment_length))
         # Copy the buffer from start to the termination of the buffer into
         # the first part of return_value.
-        return_value[:remaining_space] = \
-            multiprocessing.Array(in_stream_type, buffer[start:])
+        return_value[:remaining_space] = multiprocessing.Array(
+            in_stream_type, buffer[start:]
+        )
         # Roll over the end of the circular buffer. Copy the buffer
         # in cells 0 to end into the second part of remaining_space.
-        return_value[remaining_space:] = \
-            multiprocessing.Array(in_stream_type, buffer[:end])
+        return_value[remaining_space:] = multiprocessing.Array(
+            in_stream_type, buffer[:end]
+        )
     out_stream.extend(list(return_value))
     return
-#-------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+
 
 def copy_data_to_stream(data, proc, stream_name):
     """
@@ -1015,6 +1061,7 @@ def copy_data_to_stream(data, proc, stream_name):
 
     """
     proc.copy_stream(data, stream_name)
+
 
 def finished_source(proc, stream_name):
     """
@@ -1040,8 +1087,9 @@ def finished_source(proc, stream_name):
     # Inform all processes that this source has finished. The
     # other processes will terminate only after all sources are
     # finished.
-    proc.broadcast('source_finished', (proc.name, stream_name))
-    
+    proc.broadcast("source_finished", (proc.name, stream_name))
+
+
 def make_multicore_processes(process_specs, connect_streams, **kwargs):
     processes = process_specs
     # source_status is an array of bytes, one for each source in
@@ -1051,16 +1099,16 @@ def make_multicore_processes(process_specs, connect_streams, **kwargs):
     # source_status[j] = 1 if the j-th source is still generating values.
     # source_status[j] = 0 if the j-th source has terminated.
     # Initially source_status[j] = 1 for 0 <= j < MAX_NUM_SOURCES.
-    source_status = multiprocessing.Array('B', MAX_NUM_SOURCES)
+    source_status = multiprocessing.Array("B", MAX_NUM_SOURCES)
     # queue_status is an array of bytes, one for each process.
     # queue_status[j] = 1 if the j-th queue is operational and
     # queue_status[j] = 0 if the j-th queue has finished.
     # Initially queue_status[j] = 1 for 0 <= j < MAX_NUM_PROCESSES.
-    queue_status = multiprocessing.Array('B', MAX_NUM_PROCESSES)
+    queue_status = multiprocessing.Array("B", MAX_NUM_PROCESSES)
     connections = make_connections_from_connect_streams(connect_streams)
-    #check_processes_connections_format(processes, connections)
-    #check_connections_validity(processes, connections)
-    
+    # check_processes_connections_format(processes, connections)
+    # check_connections_validity(processes, connections)
+
     # Make a proc (i.e. a MulticoreProcess) for each spec (i.e.
     # process specification).
     procs = {}
@@ -1083,7 +1131,7 @@ def make_multicore_processes(process_specs, connect_streams, **kwargs):
     # The source_id goes from 0, to 1, ... to the number of sources.
     # We associate a source_id with each source. The source_id for
     # each source across the multicore application is unique.
-    source_id_count=0
+    source_id_count = 0
     # source_ids is a dict. key is process_name. value is a dict where
     # source_ids[process_name] is a dict. key: source_name, value: source_id.
     # source_ids[process_name][source_name] is unique for each source in the
@@ -1091,8 +1139,8 @@ def make_multicore_processes(process_specs, connect_streams, **kwargs):
     source_ids = {}
     for process_name, spec in processes.items():
         source_ids[process_name] = {}
-        #sources_dict = spec['sources']
-        sources = spec['sources']
+        # sources_dict = spec['sources']
+        sources = spec["sources"]
         for source_name_and_type in sources:
             source_name, source_type = source_name_and_type
             source_ids[process_name][source_name] = source_id_count
@@ -1105,14 +1153,14 @@ def make_multicore_processes(process_specs, connect_streams, **kwargs):
         this_process.source_ids = source_ids
         this_process.source_status = source_status
 
-    #Create main_lock and pass it to all processes.
+    # Create main_lock and pass it to all processes.
     main_lock = multiprocessing.Lock()
 
     # Create process ids and set queue_status.
     # process_ids is a dict where process_ids[process_name]
     # is a unique process_id. This id is unique across all
     # processes in the multicore application.
-    process_id_count=0
+    process_id_count = 0
     process_ids = {}
     for process_name in processes.keys():
         process_ids[process_name] = process_id_count
@@ -1140,6 +1188,7 @@ def make_multicore_processes(process_specs, connect_streams, **kwargs):
 
 def get_processes(multicore_specification):
     connect_streams, process_specs = make_spec_from_multicore_specification(
-        multicore_specification)
+        multicore_specification
+    )
     processes, procs = make_multicore_processes(process_specs, connect_streams)
     return processes

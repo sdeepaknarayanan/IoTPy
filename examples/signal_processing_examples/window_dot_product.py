@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import os
 import matplotlib.pyplot as plt
+
 sys.path.append(os.path.abspath("../../gunshots"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
@@ -11,6 +12,7 @@ from stream import Stream, StreamArray
 from op import map_window
 from recent_values import recent_values
 from basics import map_e, map_w
+
 
 def window_dot_product(in_stream, out_stream, multiplicand_vector, step_size=1):
     """
@@ -35,18 +37,26 @@ def window_dot_product(in_stream, out_stream, multiplicand_vector, step_size=1):
     The window size is len(multiplicand_vector).
 
     """
-    @map_w
-    def f(window, multiplicand_vector): return np.dot(window, multiplicand_vector)
-    f(in_stream, out_stream, len(multiplicand_vector), step_size,
-      multiplicand_vector=multiplicand_vector)
-    
 
-#----------------------------------------------------------------
+    @map_w
+    def f(window, multiplicand_vector):
+        return np.dot(window, multiplicand_vector)
+
+    f(
+        in_stream,
+        out_stream,
+        len(multiplicand_vector),
+        step_size,
+        multiplicand_vector=multiplicand_vector,
+    )
+
+
+# ----------------------------------------------------------------
 # TESTS
-#----------------------------------------------------------------
+# ----------------------------------------------------------------
 def test():
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
     ## f(x, y, window_size=2, step_size=1, multiplicand_vector=[2, 100])
     window_dot_product(x, y, multiplicand_vector=[2, 100])
     x.extend(np.arange(8))
@@ -58,5 +68,6 @@ def test():
     # because the window size is 2 (i.e. the size of the multiplicand
     # vector).
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

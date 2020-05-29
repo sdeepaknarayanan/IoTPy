@@ -21,24 +21,34 @@ In addition functions that return streams are:
    timed_window_f (version of timed_window)
 
 """
-from ..core.stream import StreamArray, Stream 
+from ..core.stream import StreamArray, Stream
 from ..core.agent import Agent
 from ..core.helper_control import _multivalue
 
 # stream, agent, helper_control are in ../cores
 from .check_agent_parameter_types import *
+
 # check_agent_parameter_types is in this folder.
+
 
 def make_out_stream(in_stream):
     if isinstance(in_stream, Stream):
         return Stream()
     if isinstance(in_stream, StreamArray):
         return StreamArray(dimension=in_stream.dimension, dtype=in_stream.dtype)
-#------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------
 def map_element(
-        func, in_stream, out_stream,
-        state=None, call_streams=None, name=None,
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     This agent maps the function func from its single input stream to its
     single output stream.
@@ -97,7 +107,7 @@ def map_element(
         num_in_streams = 1
         check_in_lists_type(name, in_lists, num_in_streams)
         in_list = in_lists[0]
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged.
@@ -107,22 +117,20 @@ def map_element(
         if state is None:
             output_list = [func(v, *args, **kwargs) for v in input_list]
         else:
-            output_list = [[]]*len(input_list)
+            output_list = [[]] * len(input_list)
             for i in range(len(input_list)):
                 output_list[i], state = func(input_list[i], state, *args, **kwargs)
-                
-        return ([output_list], state, [in_list.start+len(input_list)])
+
+        return ([output_list], state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
-def signal_element(
-        func, in_stream, out_stream,
-        state=None, name=None,
-        *args, **kwargs):
+# ------------------------------------------------------------------------------------
+def signal_element(func, in_stream, out_stream, state=None, name=None, *args, **kwargs):
     """
     This agent executes func when it reads a new value on
     in_stream. The function func operates on kwargs and possibly
@@ -155,7 +163,7 @@ def signal_element(
        * check_map_agent_arguments
 
     """
-    call_streams=None
+    call_streams = None
     check_map_agent_arguments(func, in_stream, out_stream, call_streams, name)
 
     # The transition function for this agent.
@@ -163,7 +171,7 @@ def signal_element(
         num_in_streams = 1
         check_in_lists_type(name, in_lists, num_in_streams)
         in_list = in_lists[0]
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged.
@@ -178,18 +186,25 @@ def signal_element(
             else:
                 output, state = func(state, *args, **kwargs)
 
-        return ([[output]], state, [in_list.start+len(input_list)])
+        return ([[output]], state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def filter_element(
-        func, in_stream, out_stream,
-        state=None, call_streams=None, name=None,
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     This agent uses the boolean function func to filter its single input stream
     to produce a single output stream.
@@ -239,7 +254,7 @@ def filter_element(
         num_in_streams = 1
         check_in_lists_type(name, in_lists, num_in_streams)
         in_list = in_lists[0]
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged.
@@ -247,21 +262,23 @@ def filter_element(
             return ([[]], state, [in_list.start])
 
         if state is None:
-            output_list = [v for v in input_list if func(v, *args, **kwargs) ]
+            output_list = [v for v in input_list if func(v, *args, **kwargs)]
         else:
             output_list = []
             for i in range(len(input_list)):
                 boole, state = func(input_list[i], state, *args, **kwargs)
-                if boole: output_list.append(input_list[i])
-                
-        return ([output_list], state, [in_list.start+len(input_list)])
+                if boole:
+                    output_list.append(input_list[i])
+
+        return ([output_list], state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def map_element_f(func, in_stream, state=None, *args, **kwargs):
     """
     map_element_f returns out_stream, a stream obtained by applying function to each
@@ -285,15 +302,13 @@ def map_element_f(func, in_stream, state=None, *args, **kwargs):
 
 
     """
-    
+
     out_stream = make_out_stream(in_stream)
-    map_element(func, in_stream, out_stream, state,
-                      None, None,
-                      *args, **kwargs)
+    map_element(func, in_stream, out_stream, state, None, None, *args, **kwargs)
     return out_stream
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def filter_element_f(func, in_stream, state=None, *args, **kwargs):
     """
     filter_element_f returns out_stream, a stream obtained by applying the filter function
@@ -319,15 +334,22 @@ def filter_element_f(func, in_stream, state=None, *args, **kwargs):
         map_element_f
 
     """
-    out_stream = Stream(func.__name__+in_stream.name)
-    filter_element(func, in_stream, out_stream, state, *args,
-                         **kwargs)
+    out_stream = Stream(func.__name__ + in_stream.name)
+    filter_element(func, in_stream, out_stream, state, *args, **kwargs)
     return out_stream
 
-#------------------------------------------------------------------------------------
-def map_list(func, in_stream, out_stream, state=None,
-                   call_streams=None, name=None,
-                   *args, **kwargs):
+
+# ------------------------------------------------------------------------------------
+def map_list(
+    func,
+    in_stream,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     This is the same as map_element except that in map_list
     func is from a list to a list whereas in map_element
@@ -373,8 +395,8 @@ def map_list(func, in_stream, out_stream, state=None,
         # in_list is an object of type InList, and it consists of an
         # arbitrarily long list (in_list.list), and pointers to where
         # this agent is starting to read the list (in_list.start), and
-        # where the list ends (in_list.stop). 
-        input_list = in_list.list[in_list.start:in_list.stop]
+        # where the list ends (in_list.stop).
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged. This is the
@@ -395,8 +417,8 @@ def map_list(func, in_stream, out_stream, state=None,
         #             this agent. Since this agent has read the entire
         #             input_list, move its starting pointer forward by
         #             the length of the input list.
-        return ([output_list], state, [in_list.start+len(input_list)])
-    
+        return ([output_list], state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent with parameters:
@@ -406,20 +428,27 @@ def map_list(func, in_stream, out_stream, state=None,
     # 4. new state
     # 5. list of calling streams
     # 6. Agent name
-    return Agent([in_stream], [out_stream], transition, state,
-                 call_streams, name)
+    return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
-#------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------
 def map_list_f(func, in_stream, state=None, *args, **kwargs):
-    out_stream = Stream(func.__name__+in_stream.name)
-    map_list(func, in_stream, out_stream, state, None, None,
-                   *args, **kwargs)
+    out_stream = Stream(func.__name__ + in_stream.name)
+    map_list(func, in_stream, out_stream, state, None, None, *args, **kwargs)
     return out_stream
 
-#------------------------------------------------------------------------------------
-def chunk(func, in_stream, out_stream, state=None,
-          call_streams=None, name=None,
-          *args, **kwargs):
+
+# ------------------------------------------------------------------------------------
+def chunk(
+    func,
+    in_stream,
+    out_stream,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     Identical to map_list except that instead of returning
     a list of values that extends the output stream it
@@ -468,8 +497,8 @@ def chunk(func, in_stream, out_stream, state=None,
         # in_list is an object of type InList, and it consists of an
         # arbitrarily long list (in_list.list), and pointers to where
         # this agent is starting to read the list (in_list.start), and
-        # where the list ends (in_list.stop). 
-        input_list = in_list.list[in_list.start:in_list.stop]
+        # where the list ends (in_list.stop).
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged. This is the
@@ -494,8 +523,8 @@ def chunk(func, in_stream, out_stream, state=None,
         #             the length of the input list.
         # Note: for map_list the return statement is:
         # return ([output_list], state, [in_list.start+len(input_list)])
-        return ([[output]], state, [in_list.start+len(input_list)])
-    
+        return ([[output]], state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent with parameters:
@@ -505,24 +534,30 @@ def chunk(func, in_stream, out_stream, state=None,
     # 4. new state
     # 5. list of calling streams
     # 6. Agent name
-    return Agent([in_stream], [out_stream], transition, state,
-                 call_streams, name)
+    return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def map_array_f(func, in_stream, state=None, *args, **kwargs):
-    out_stream = StreamArray(func.__name__+in_stream.name)
-    map_list(func, in_stream, out_stream, state, None, None,
-                   *args, **kwargs)
+    out_stream = StreamArray(func.__name__ + in_stream.name)
+    map_list(func, in_stream, out_stream, state, None, None, *args, **kwargs)
     return out_stream
 
-#------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------
 def map_window(
-        func, in_stream, out_stream,
-        window_size, step_size=1,
-        state=None, initial_value=None,
-        call_streams=None, name=None,
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_stream,
+    window_size,
+    step_size=1,
+    state=None,
+    initial_value=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
 
     Parameters
@@ -579,38 +614,59 @@ def map_window(
             return ([output_list], state, [in_list.start])
 
         # There is enough input data for at least one step.
-        num_steps = int(1+(list_length - window_size)//step_size)
-        output_list = [[]]*num_steps
+        num_steps = int(1 + (list_length - window_size) // step_size)
+        output_list = [[]] * num_steps
         for i in range(num_steps):
             window = in_list.list[
-                in_list.start+i*step_size : in_list.start+i*step_size+window_size]
+                in_list.start
+                + i * step_size : in_list.start
+                + i * step_size
+                + window_size
+            ]
             if state is None:
                 output_list[i] = func(window, *args, **kwargs)
             else:
                 output_list[i], state = func(window, state, *args, **kwargs)
-        
-        return ([output_list], state, [in_list.start+num_steps*step_size])
+
+        return ([output_list], state, [in_list.start + num_steps * step_size])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
-#------------------------------------------------------------------------------------
-def map_window_f(
-        func, in_stream,
-        window_size, step_size, state=None,
-        *args, **kwargs):
-    out_stream = Stream(func.__name__+in_stream.name)
-    map_window(func, in_stream, out_stream, window_size, step_size,
-                     state, None, None, *args, **kwargs)
+
+# ------------------------------------------------------------------------------------
+def map_window_f(func, in_stream, window_size, step_size, state=None, *args, **kwargs):
+    out_stream = Stream(func.__name__ + in_stream.name)
+    map_window(
+        func,
+        in_stream,
+        out_stream,
+        window_size,
+        step_size,
+        state,
+        None,
+        None,
+        *args,
+        **kwargs
+    )
     return out_stream
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def map_window_list(
-        func, in_stream, out_stream,
-        window_size, step_size=1,
-        state=None, call_streams=None, name=None, *args, **kwargs):
+    func,
+    in_stream,
+    out_stream,
+    window_size,
+    step_size=1,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     Same as map_window except that func in map_window_list returns a list
     and the out_stream is extended (not appended) with the list.
@@ -637,41 +693,63 @@ def map_window_list(
             return ([output_list], state, [in_list.start])
 
         # There is enough input data for at least one step.
-        num_steps = int(1+(list_length - window_size)//step_size)
-        output_list = [[]]*num_steps
+        num_steps = int(1 + (list_length - window_size) // step_size)
+        output_list = [[]] * num_steps
         for i in range(num_steps):
             window = in_list.list[
-                in_list.start+i*step_size : in_list.start+i*step_size+window_size]
+                in_list.start
+                + i * step_size : in_list.start
+                + i * step_size
+                + window_size
+            ]
             if state is None:
                 output_list[i] = _multivalue(func(window, *args, **kwargs))
             else:
                 multivalue_output, next_state = func(window, state, *args, **kwargs)
-                output_list[i], state = \
-                  _multivalue(multivalue_output), next_state
-        
-        return ([output_list], state, [in_list.start+num_steps*step_size])
+                output_list[i], state = _multivalue(multivalue_output), next_state
+
+        return ([output_list], state, [in_list.start + num_steps * step_size])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def map_window_list_f(
-        func, in_stream,
-        window_size, step_size, state=None,
-        *args, **kwargs):
-    out_stream = Stream(func.__name__+in_stream.name)
-    map_window_list(func, in_stream, out_stream, window_size, step_size,
-                     state, None, None, *args, **kwargs)
+    func, in_stream, window_size, step_size, state=None, *args, **kwargs
+):
+    out_stream = Stream(func.__name__ + in_stream.name)
+    map_window_list(
+        func,
+        in_stream,
+        out_stream,
+        window_size,
+        step_size,
+        state,
+        None,
+        None,
+        *args,
+        **kwargs
+    )
     return out_stream
 
-#------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------
 def timed_window(
-        func, in_stream, out_stream,
-        window_duration, step_time, window_start_time=0,
-        state=None, call_streams=None, name=None,
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_stream,
+    window_duration,
+    step_time,
+    window_start_time=0,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -701,7 +779,6 @@ def timed_window(
          The agent created by this function.
 
     """
-    
 
     # All windows with start times earlier than window_start_time
     # have already been processed.
@@ -718,10 +795,10 @@ def timed_window(
         # outputs a single list.
         output_list = []
         # input_list is the list extracted from in_list
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         if len(input_list) == 0:
             return ([output_list], state, [in_list.start])
-        
+
         # Extract window start and the underlying state from the combined state.
         window_start_time, temp_state = state
         state = temp_state
@@ -731,13 +808,15 @@ def timed_window(
         # index is a pointer to input_list which starts at 0.
         timestamp_list = [timestamp_and_value[0] for timestamp_and_value in input_list]
         window_start_index = 0
-        
-        # Main loop    
+
+        # Main loop
         while window_end_time <= last_element_time:
             # Compute window_start_index which is the earliest index to an element
             # whose timestamp is greater than or equal to window_start_time
-            while (window_start_index < len(input_list) and
-                   timestamp_list[window_start_index] < window_start_time):
+            while (
+                window_start_index < len(input_list)
+                and timestamp_list[window_start_index] < window_start_time
+            ):
                 window_start_index += 1
 
             if window_start_index >= len(input_list):
@@ -753,12 +832,13 @@ def timed_window(
             if window_end_time > timestamp_list[window_start_index]:
                 num_steps = 0
             else:
-                num_steps = \
-                  1 + int(timestamp_list[window_start_index] - window_end_time)// int(step_time)
+                num_steps = 1 + int(
+                    timestamp_list[window_start_index] - window_end_time
+                ) // int(step_time)
             # Slide the start and end times forward by the number of steps.
             window_start_time += num_steps * step_time
             window_end_time = window_start_time + window_duration
- 
+
             # If window end time exceeds the timestamp of the last element then
             # this time-window crosses the input list. So, we have to wait for
             # elements with higher timestamps before the end of the window can
@@ -772,7 +852,7 @@ def timed_window(
             while timestamp_list[window_end_index] < window_end_time:
                 window_end_index += 1
 
-            next_window = input_list[window_start_index : window_end_index]
+            next_window = input_list[window_start_index:window_end_index]
 
             # Compute output_increment which is the output for
             # next_window.
@@ -783,7 +863,7 @@ def timed_window(
 
             # Append the output for this window to the output list.
             # The timestamp for this output is window_end_time.
-            output_list.append((window_end_time,output_increment))
+            output_list.append((window_end_time, output_increment))
             # Move the window forward by one step.
             window_start_time += step_time
             window_end_time = window_start_time + window_duration
@@ -792,28 +872,37 @@ def timed_window(
         # RETURN OUTPUT LIST, NEW STATE, and NEW STARTING INDEX
         # Compute window_start_index which is the earliest index to an element
         # whose timestamp is greater than or equal to window_start_time
-        while (window_start_index < len(timestamp_list) and
-               timestamp_list[window_start_index] < window_start_time):
+        while (
+            window_start_index < len(timestamp_list)
+            and timestamp_list[window_start_index] < window_start_time
+        ):
             window_start_index += 1
         state = (window_start_time, state)
         # Return the list of output messages, the new state, and the
         # new start value of the input stream.
-        return ([output_list], state, [window_start_index+in_list.start])
-    
+        return ([output_list], state, [window_start_index + in_list.start])
+
     # Create agent
     return Agent([in_stream], [out_stream], transition, state, call_streams, name)
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 def timed_window_f(
-        func, in_stream, window_duration, step_time, state=None, args=[], kwargs={}):
-    out_stream = Stream(func.__name__+in_stream.name)
-    timed_window(func, in_stream, out_stream, window_duration, step_time,
-                    state=state, *args, **kwargs)
+    func, in_stream, window_duration, step_time, state=None, args=[], kwargs={}
+):
+    out_stream = Stream(func.__name__ + in_stream.name)
+    timed_window(
+        func,
+        in_stream,
+        out_stream,
+        window_duration,
+        step_time,
+        state=state,
+        *args,
+        **kwargs
+    )
     return out_stream
 
 
 def copy_stream(in_stream, out_stream):
     map_element(func=lambda x: x, in_stream=in_stream, out_stream=out_stream)
-
-

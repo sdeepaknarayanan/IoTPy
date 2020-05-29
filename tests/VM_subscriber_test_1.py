@@ -18,12 +18,14 @@ Start the subscriber an instant before starting the publisher.
 """
 import sys
 import os
+
 sys.path.append(os.path.abspath("../multiprocessing"))
 sys.path.append(os.path.abspath("../agent_types"))
 
 from distributed import distributed_process
 from VM import VM
 from sink import sink_element
+
 
 def single_process_publication_subscriber():
     """
@@ -52,28 +54,29 @@ def single_process_publication_subscriber():
 
     # STEP 3: DEFINE COMPUTE_FUNC
     def g(in_streams, out_streams):
-        def print_element(v): print 'stream element is ', v
-        sink_element(
-            func=print_element, in_stream=in_streams[0])
+        def print_element(v):
+            print "stream element is ", v
+
+        sink_element(func=print_element, in_stream=in_streams[0])
 
     # STEP 4: CREATE PROCESSES
     proc_1 = distributed_process(
         compute_func=g,
-        in_stream_names=['in'],
+        in_stream_names=["in"],
         out_stream_names=[],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_1')
+        name="proc_1",
+    )
 
     # FINAL STEP: CREATE A VM AND START IT.
     # Since this application has a single process it has no
     # connections between processes. The process, proc_1, subscribes
     # to a stream called 'sequence'. This process does not publish
-    # streams. 
+    # streams.
     vm_1 = VM(
-        processes=[proc_1],
-        connections=[],
-        subscribers=[(proc_1, 'in', 'sequence')])
+        processes=[proc_1], connections=[], subscribers=[(proc_1, "in", "sequence")]
+    )
     vm_1.start()
 
 
@@ -83,15 +86,18 @@ def single_process_publication_subscriber():
 # ----------------------------------------------------------------
 # ----------------------------------------------------------------
 
+
 def single_process_publication_subscriber_test():
     print
-    print 'Starting single_process_subscription_example_1()'
+    print "Starting single_process_subscription_example_1()"
     single_process_publication_subscriber()
     print
-    print '-----------------------------------------------------'
+    print "-----------------------------------------------------"
+
 
 def test():
     single_process_publication_subscriber_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

@@ -1,4 +1,3 @@
-
 """
 Creates a multiprocess, multithread application to detect high
 readings.
@@ -18,12 +17,15 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # multicore is in multiprocessing
 from multicore import shared_memory_process, Multiprocess
+
 # stream is in core
 from stream import Stream
+
 # op, merge, source, sink are in agent_types
 from merge import zip_map
 from source import source_float_file
 from sink import stream_to_file
+
 # accelerometer_agents are in ("./accelerometer_agents")
 from accelerometer_agents import subtract_mean, magnitude_of_vector
 from accelerometer_agents import simple_anomalies
@@ -49,42 +51,41 @@ def compute_func(in_streams, out_streams):
       anomaly was detected in in_streams and is 0.0 otherwise.
 
     """
-    
-    #------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
     # DECLARE INTERNAL STREAMS
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # magnitudes is a stream of magnitudes of a stream of vectors
     # where each vector is given by its e, n, z values.
-    magnitudes = Stream('magnitudes')
+    magnitudes = Stream("magnitudes")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # CREATE AGENTS
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # This agent generates streams of magnitudes of vectors
     # from streams of the components of the vectors.
     magnitude_of_vector(in_streams, out_stream=magnitudes)
     # This agent generates streams of anomalies from
     # streams of magnitudes.
-    simple_anomalies(
-        in_stream=magnitudes, out_stream=out_streams[0],
-        threshold=0.05)
+    simple_anomalies(in_stream=magnitudes, out_stream=out_streams[0], threshold=0.05)
     # Agents that put data into files for plots and analysis.
-    stream_to_file(magnitudes, 'magnitude.txt')
+    stream_to_file(magnitudes, "magnitude.txt")
     ## stream_to_file(out_streams[0], 'local_anomalies.txt')
+
 
 # anomalies_actuator is a separate thread that writes results
 # to a file. You can also use stream_to_file which runs in the
 # compute_func thread, and works just as well. This example
 # tests the actuator.
-anomalies_actuator = queue_to_file(
-    filename='local_anomalies.txt', timeout=1.0)
+anomalies_actuator = queue_to_file(filename="local_anomalies.txt", timeout=1.0)
 
 # ----------------------------------------------------------------
 #  DEFINE SOURCES
 # ----------------------------------------------------------------
-directions = ['e', 'n', 'z']
-TIME_INTERVAL=0.0001
-NUM_STEPS=None
+directions = ["e", "n", "z"]
+TIME_INTERVAL = 0.0001
+NUM_STEPS = None
+
 
 def source(filename):
     """
@@ -100,8 +101,8 @@ def source(filename):
       name of a file
 
     """
-    return source_float_file(
-        filename, TIME_INTERVAL, NUM_STEPS).source_func
+    return source_float_file(filename, TIME_INTERVAL, NUM_STEPS).source_func
+
 
 def local_anomaly_process(filenames):
     """
@@ -123,20 +124,18 @@ def local_anomaly_process(filenames):
     return shared_memory_process(
         compute_func=compute_func,
         in_stream_names=directions,
-        out_stream_names=['out'],
+        out_stream_names=["out"],
         connect_sources=[
-            (directions[i], source(filenames[i]))
-            for i in range(len(directions))],
-        connect_actuators=[
-            ('out', anomalies_actuator.actuate)
-            ]
-        )
+            (directions[i], source(filenames[i])) for i in range(len(directions))
+        ],
+        connect_actuators=[("out", anomalies_actuator.actuate)],
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # filenames has data recorded from east, north,
     # and vertical directions from a sensor
-    filenames = ['S1.e.txt', 'S1.n.txt', 'S1.z.txt']
+    filenames = ["S1.e.txt", "S1.n.txt", "S1.z.txt"]
     proc = local_anomaly_process(filenames)
     mp = Multiprocess(processes=[proc], connections=[])
     mp.run()
-    

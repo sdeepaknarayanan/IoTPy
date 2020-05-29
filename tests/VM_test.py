@@ -10,6 +10,7 @@ import sys
 import os
 import threading
 import random
+
 sys.path.append(os.path.abspath("../multiprocessing"))
 sys.path.append(os.path.abspath("../core"))
 sys.path.append(os.path.abspath("../agent_types"))
@@ -36,7 +37,8 @@ from print_stream import print_stream
 # ----------------------------------------------------------------
 #   EXAMPLES: SINGLE PROCESS, MULTIPLE SOURCES
 # ----------------------------------------------------------------
-# ---------------------------------------------------------------- 
+# ----------------------------------------------------------------
+
 
 def single_process_multiple_sources_example_1():
     """
@@ -68,7 +70,7 @@ def single_process_multiple_sources_example_1():
         # A simple source which outputs 1, 2, 3, 4, .... on
         # out_stream.
         def generate_sequence(state):
-            return state+1, state+1
+            return state + 1, state + 1
 
         # Return a source which takes 10 steps, and
         # sleeps for 0.1 seconds between successive steps, and
@@ -76,8 +78,12 @@ def single_process_multiple_sources_example_1():
         # and starts the sequence with value 0. The elements on
         # out_stream will be 1, 2, 3, ...
         return source_func_to_stream(
-            func=generate_sequence, out_stream=out_stream,
-            time_interval=0.1, num_steps=10, state=0)
+            func=generate_sequence,
+            out_stream=out_stream,
+            time_interval=0.1,
+            num_steps=10,
+            state=0,
+        )
 
     def source_1(out_stream):
         # A simple source which outputs random numbers on
@@ -87,8 +93,8 @@ def single_process_multiple_sources_example_1():
         # seconds between successive steps, and puts a random number
         # on out_stream at each step.
         return source_func_to_stream(
-            func=random.random, out_stream=out_stream,
-            time_interval=0.1, num_steps=10)
+            func=random.random, out_stream=out_stream, time_interval=0.1, num_steps=10
+        )
 
     # STEP 2: DEFINE ACTUATORS
     # This example has no actuators
@@ -100,24 +106,26 @@ def single_process_multiple_sources_example_1():
         # input streams and no output stream.
         # The first component agent zips the two input streams and puts
         # the result on its output stream t which is internal to the
-        # network. 
+        # network.
         # The second component agent puts values in its input stream t
         # on a file called output.dat.
         from sink import stream_to_file
+
         # t is an internal stream of the network
         t = Stream()
         zip_stream(in_streams=in_streams, out_stream=t)
-        stream_to_file(in_stream=t, filename='output.dat')
+        stream_to_file(in_stream=t, filename="output.dat")
 
     # STEP 4: CREATE PROCESSES
     # proc = distributed_process(
     proc = distributed_process(
         compute_func=compute_func,
-        in_stream_names=['source_0','source_1'],
+        in_stream_names=["source_0", "source_1"],
         out_stream_names=[],
-        connect_sources=[('source_0', source_0), ('source_1', source_1)],
+        connect_sources=[("source_0", source_0), ("source_1", source_1)],
         connect_actuators=[],
-        name='multiple source test')
+        name="multiple source test",
+    )
 
     # FINAL STEP: RUN APPLICATION
     # Since this application has a single process it has no
@@ -125,7 +133,8 @@ def single_process_multiple_sources_example_1():
     vm = Multiprocess(processes=[proc], connections=[])
     vm.run()
 
-#-----------------------------------------------------------------
+
+# -----------------------------------------------------------------
 def single_process_publication_example_1():
     """
     The application in this example consists of single process.
@@ -151,15 +160,15 @@ def single_process_publication_example_1():
     processes and run the application by calling run_multiprocess.
 
     """
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
     # VM_0
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
 
-    #------------------------
+    # ------------------------
     # proc_0 in VM_0
-    #------------------------
+    # ------------------------
 
     # STEP 1: DEFINE SOURCES
     def source(out_stream):
@@ -167,7 +176,9 @@ def single_process_publication_example_1():
         A simple source which outputs 1, 2, 3,... on
         out_stream.
         """
-        def generate_sequence(state): return state+1, state+1
+
+        def generate_sequence(state):
+            return state + 1, state + 1
 
         # Return an agent which takes 10 steps, and
         # sleeps for 0.1 seconds between successive steps, and
@@ -175,18 +186,21 @@ def single_process_publication_example_1():
         # and starts the sequence with value 0. The elements on
         # out_stream will be 1, 2, 3, ...
         return source_func_to_stream(
-            func=generate_sequence, out_stream=out_stream,
-            time_interval=0.1, num_steps=4, state=0)
+            func=generate_sequence,
+            out_stream=out_stream,
+            time_interval=0.1,
+            num_steps=4,
+            state=0,
+        )
 
     # STEP 2: DEFINE ACTUATORS
     # This example has no actuators
-    
+
     # STEP 3: DEFINE COMPUTE_FUNC
     def f(in_streams, out_streams):
         map_element(
-            func=lambda x: x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
+            func=lambda x: x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     # STEP 4: CREATE PROCESSES
     # This process has a single input stream that we call 'in' and it
@@ -194,29 +208,29 @@ def single_process_publication_example_1():
     # called 'in'.
     proc_0 = distributed_process(
         compute_func=f,
-        in_stream_names=['in'],
-        out_stream_names=['out'],
-        connect_sources=[('in', source)],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
+        connect_sources=[("in", source)],
         connect_actuators=[],
-        name='proc_0')
+        name="proc_0",
+    )
 
     # STEP 5: CREATE VM
     # Since this application has a single process it has no
     # connections between processes.
     vm_0 = VM(
-        processes=[proc_0],
-        connections=[],
-        publishers=[(proc_0, 'out', 'sequence')])
+        processes=[proc_0], connections=[], publishers=[(proc_0, "out", "sequence")]
+    )
 
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
     # VM_1
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
 
-    #------------------------
+    # ------------------------
     # proc_1 in VM_1
-    #------------------------
+    # ------------------------
     # STEP 1: DEFINE SOURCES
     # skip this step since proc_1 has no sources.
 
@@ -225,26 +239,27 @@ def single_process_publication_example_1():
 
     # STEP 3: DEFINE COMPUTE_FUNC
     def g(in_streams, out_streams):
-        def print_element(v): print 'stream element is ', v
-        sink_element(
-            func=print_element, in_stream=in_streams[0])
+        def print_element(v):
+            print "stream element is ", v
+
+        sink_element(func=print_element, in_stream=in_streams[0])
 
     # STEP 4: CREATE PROCESSES
     proc_1 = distributed_process(
         compute_func=g,
-        in_stream_names=['in'],
+        in_stream_names=["in"],
         out_stream_names=[],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_1')
+        name="proc_1",
+    )
 
     # STEP 5: CREATE VM
     # Since this application has a single process it has no
     # connections between processes.
     vm_1 = VM(
-        processes=[proc_1],
-        connections=[],
-        subscribers=[(proc_1, 'in', 'sequence')])
+        processes=[proc_1], connections=[], subscribers=[(proc_1, "in", "sequence")]
+    )
 
     # STEP 6: START PROCESSES
     vm_0.start()
@@ -255,7 +270,7 @@ def single_process_publication_example_1():
     vm_1.join()
 
 
-#-----------------------------------------------------------------
+# -----------------------------------------------------------------
 def two_process_publication_example_1():
 
     """
@@ -308,15 +323,15 @@ def two_process_publication_example_1():
 
     """
 
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
     # VM_0
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
 
-    #------------------------
+    # ------------------------
     # proc_0 in VM_0
-    #------------------------
+    # ------------------------
 
     # STEP 1: DEFINE SOURCES
     def source(out_stream):
@@ -324,7 +339,9 @@ def two_process_publication_example_1():
         A simple source which outputs 1, 2, 3,... on
         out_stream.
         """
-        def generate_sequence(state): return state+1, state+1
+
+        def generate_sequence(state):
+            return state + 1, state + 1
 
         # Return an agent which takes 10 steps, and
         # sleeps for 0.1 seconds between successive steps, and
@@ -332,8 +349,12 @@ def two_process_publication_example_1():
         # and starts the sequence with value 0. The elements on
         # out_stream will be 1, 2, 3, ...
         return source_func_to_stream(
-            func=generate_sequence, out_stream=out_stream,
-            time_interval=0.1, num_steps=4, state=0)
+            func=generate_sequence,
+            out_stream=out_stream,
+            time_interval=0.1,
+            num_steps=4,
+            state=0,
+        )
 
     # STEP 2: DEFINE ACTUATORS
     # This example has no actuators
@@ -341,10 +362,8 @@ def two_process_publication_example_1():
     # STEP 3: DEFINE COMPUTE_FUNC
     def f(in_streams, out_streams):
         map_element(
-            func=lambda x: x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
-
+            func=lambda x: x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     # STEP 4: CREATE PROCESSES
     # This process has a single input stream that we call 'in' and it
@@ -352,15 +371,16 @@ def two_process_publication_example_1():
     # called 'in'.
     proc_0 = distributed_process(
         compute_func=f,
-        in_stream_names=['in'],
-        out_stream_names=['out'],
-        connect_sources=[('in', source)],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
+        connect_sources=[("in", source)],
         connect_actuators=[],
-        name='proc_0')
+        name="proc_0",
+    )
 
-    #------------------------
+    # ------------------------
     # proc_1 in VM_0
-    #------------------------
+    # ------------------------
     # STEP 1: DEFINE SOURCES
     # skip this step since proc_1 has no sources.
 
@@ -370,37 +390,35 @@ def two_process_publication_example_1():
     # STEP 3: DEFINE COMPUTE_FUNC
     def g(in_streams, out_streams):
         map_element(
-            func=lambda x: 10*x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
+            func=lambda x: 10 * x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     # STEP 4: CREATE PROCESSES
     proc_1 = distributed_process(
         compute_func=g,
-        in_stream_names=['in'],
-        out_stream_names=['out'],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_1')
+        name="proc_1",
+    )
 
     # STEP 5: CREATE VM
     vm_0 = VM(
         processes=[proc_0, proc_1],
-        connections=[
-            (proc_0, 'out', proc_1, 'in')
-            ],
-        publishers=[(proc_1, 'out', 'sequence')])
+        connections=[(proc_0, "out", proc_1, "in")],
+        publishers=[(proc_1, "out", "sequence")],
+    )
 
-
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
     # VM_1
-    #------------------------
-    #------------------------
+    # ------------------------
+    # ------------------------
 
-    #------------------------
+    # ------------------------
     # proc_2 in VM_1
-    #------------------------
+    # ------------------------
     # STEP 1: DEFINE SOURCES
     # skip this step since proc_1 has no sources.
 
@@ -410,22 +428,22 @@ def two_process_publication_example_1():
     # STEP 3: DEFINE COMPUTE_FUNC
     def h(in_streams, out_streams):
         map_element(
-            func=lambda x: 2*x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
+            func=lambda x: 2 * x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     # STEP 4: CREATE PROCESSES
     proc_2 = distributed_process(
         compute_func=h,
-        in_stream_names=['in'],
-        out_stream_names=['out'],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_2')
+        name="proc_2",
+    )
 
-    #------------------------
+    # ------------------------
     # proc_3 in VM_1
-    #------------------------
+    # ------------------------
     # STEP 1: DEFINE SOURCES
     # skip this step since proc_1 has no sources.
 
@@ -434,24 +452,27 @@ def two_process_publication_example_1():
 
     # STEP 3: DEFINE COMPUTE_FUNC
     def pr(in_streams, out_streams):
-        def print_element(v): print 'stream element is ', v
-        sink_element(
-            func=print_element, in_stream=in_streams[0])
+        def print_element(v):
+            print "stream element is ", v
+
+        sink_element(func=print_element, in_stream=in_streams[0])
 
     # STEP 4: CREATE PROCESSES
     proc_3 = distributed_process(
         compute_func=pr,
-        in_stream_names=['in'],
+        in_stream_names=["in"],
         out_stream_names=[],
         connect_sources=[],
         connect_actuators=[],
-        name='proc_3')
+        name="proc_3",
+    )
 
     # STEP 5: CREATE VM
     vm_1 = VM(
         processes=[proc_2, proc_3],
-        connections=[(proc_2, 'out', proc_3, 'in')],
-        subscribers=[(proc_2, 'in', 'sequence')])
+        connections=[(proc_2, "out", proc_3, "in")],
+        subscribers=[(proc_2, "in", "sequence")],
+    )
 
     # STEP 6: START PROCESSES
     vm_0.start()
@@ -461,6 +482,7 @@ def two_process_publication_example_1():
     vm_0.join()
     vm_1.join()
 
+
 # ----------------------------------------------------------------
 # ----------------------------------------------------------------
 #             TESTS
@@ -468,34 +490,38 @@ def two_process_publication_example_1():
 # ----------------------------------------------------------------
 def single_process_publication_example_1_test():
     print
-    print 'Starting single_process_publication_example_1()'
-    print 'Outputs: '
+    print "Starting single_process_publication_example_1()"
+    print "Outputs: "
     print
-    print 'stream element is i'
+    print "stream element is i"
     print
-    print ' for i in range(n) where n is currently set to 5.'
+    print " for i in range(n) where n is currently set to 5."
     print
     single_process_publication_example_1()
-    print 'Finished single_process_publication_example_1()'
+    print "Finished single_process_publication_example_1()"
     print
-    print '-----------------------------------------------------'
+    print "-----------------------------------------------------"
+
+
 def two_process_publication_example_1_test():
     print
-    print 'Starting two_process_publication_example_1()'
-    print 'Outputs: '
+    print "Starting two_process_publication_example_1()"
+    print "Outputs: "
     print
-    print 'stream element is 20*i'
+    print "stream element is 20*i"
     print
-    print ' for i in 1, 2, 3, 4.'
+    print " for i in 1, 2, 3, 4."
     print
     two_process_publication_example_1()
-    print 'Finished two_process_publication_example_1()'
+    print "Finished two_process_publication_example_1()"
     print
-    print '-----------------------------------------------------'
-    
+    print "-----------------------------------------------------"
+
+
 def test():
     single_process_publication_example_1_test()
     two_process_publication_example_1_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

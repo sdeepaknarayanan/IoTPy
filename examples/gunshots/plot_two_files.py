@@ -9,21 +9,20 @@ For example,
 import matplotlib.pyplot as plt
 import sys
 
-def plot_two_files(filename_1, filename_2):
-        with open(filename_1, 'r') as the_file:
-                data_1 = [float(v) for v in the_file.read().split()]
-        with open(filename_2, 'r') as the_file:
-                data_2 = [float(v) for v in the_file.read().split()]
-        plt.figure(1)
-        plt.subplot(211)
-        plt.plot(data_1)
-        plt.subplot(212)
-        plt.plot(data_2)
-        plt.show()
 
-if __name__ == '__main__':
+def plot_two_files(filename_1, filename_2):
+    with open(filename_1, "r") as the_file:
+        data_1 = [float(v) for v in the_file.read().split()]
+    with open(filename_2, "r") as the_file:
+        data_2 = [float(v) for v in the_file.read().split()]
+    plt.figure(1)
+    plt.subplot(211)
+    plt.plot(data_1)
+    plt.subplot(212)
+    plt.plot(data_2)
+    plt.show()
+
+
+if __name__ == "__main__":
     args = sys.argv
-    plot_two_files(
-        filename_1=args[1],
-        filename_2=args[2]
-        )
+    plot_two_files(filename_1=args[1], filename_2=args[2])

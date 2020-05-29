@@ -8,29 +8,31 @@ with open("requirements.txt") as f:
     REQ = f.read().splitlines()
 
 # get __version__ from _version.py
-ver_file = os.path.join('IoTPy', '_version.py')
+ver_file = os.path.join("IoTPy", "_version.py")
 with open(ver_file) as f:
     exec(f.read())
 
 VER = __version__
 
-CLASSIFIERS = ['Intended Audience :: Science/Research',
-               'Intended Audience :: Developers',
-               'License :: OSI Approved',
-               'Programming Language :: Python',
-               'Topic :: Software Development',
-               'Topic :: Scientific/Engineering',
-               'Operating System :: Microsoft :: Windows',
-               'Operating System :: POSIX',
-               'Operating System :: Unix',
-               'Operating System :: MacOS',
-               'Programming Language :: Python :: 3.5',
-               'Programming Language :: Python :: 3.6',
-               'Programming Language :: Python :: 3.7',
-	       'Programming Language :: Python :: 3.8']
+CLASSIFIERS = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+]
 
 setup(
-    name="IoTPy", 
+    name="IoTPy",
     version=VER,
     author="Mani Chandy",
     author_email="",
@@ -38,8 +40,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/AssembleSoftware/IoTPy",
-    classifiers= CLASSIFIERS,
-    packages = find_packages(),
-    install_requires = REQ
+    classifiers=CLASSIFIERS,
+    packages=find_packages(),
+    install_requires=REQ,
 )
-

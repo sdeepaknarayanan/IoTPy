@@ -1,4 +1,3 @@
-
 """
 Creates a multiprocess, multithread application to detect high
 readings.
@@ -10,6 +9,7 @@ See https://www.assemblesoftware.com/examples/
 import sys
 import os
 import math
+
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
@@ -23,9 +23,9 @@ from helper_control import _no_value
 from timed_agent import timed_window, timed_zip_agent
 from sink import stream_to_file
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # Agent that subtracts the mean in a stream
-#----------------------------------------------------    
+# ----------------------------------------------------
 def subtract_mean(in_stream, out_stream, window_size):
     """
     Parameters
@@ -58,17 +58,15 @@ def subtract_mean(in_stream, out_stream, window_size):
            of the window subtracted.
 
         """
-        return window[-1] - sum(window)/float(len(window))
+        return window[-1] - sum(window) / float(len(window))
 
     # Wrap function to create an agent.
-    map_window(
-        f, in_stream, out_stream, window_size,
-        step_size=1,initial_value=0.0)
+    map_window(f, in_stream, out_stream, window_size, step_size=1, initial_value=0.0)
 
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # Agent that computes the magnitude of a vector
-#----------------------------------------------------   
+# ----------------------------------------------------
 def magnitude_of_vector(in_streams, out_stream):
     """
     Parameters
@@ -96,13 +94,15 @@ def magnitude_of_vector(in_streams, out_stream):
            The magnitude of the vector
 
         """
-        return math.sqrt(sum([v*v for v in coordinates]))
-    # Wrap the terminating function to create an agent
-    zip_map(g,in_streams,out_stream)
+        return math.sqrt(sum([v * v for v in coordinates]))
 
-#----------------------------------------------------
+    # Wrap the terminating function to create an agent
+    zip_map(g, in_streams, out_stream)
+
+
+# ----------------------------------------------------
 # Agent that computes local anomalies
-#----------------------------------------------------
+# ----------------------------------------------------
 def simple_anomalies(in_stream, out_stream, threshold):
     """
     Parameters
@@ -121,8 +121,10 @@ def simple_anomalies(in_stream, out_stream, threshold):
         signal = (index, abs(value)) if abs(value) > threshold else _no_value
         index += 1
         return (signal, index)
+
     # Wrap the terminating function to create an agent
-    map_element(simple_anomaly,in_stream, out_stream, state=0)
+    map_element(simple_anomaly, in_stream, out_stream, state=0)
+
 
 def quench(in_stream, out_stream, QUENCH_TIME):
     # state is the start time of the most recent quench period.
@@ -140,14 +142,14 @@ def quench(in_stream, out_stream, QUENCH_TIME):
             state = timestamp
             # This input is passed through.
             return timestamped_value, state
+
     map_element(f, in_stream, out_stream, state=0)
 
 
-    
-#----------------------------------------------------
+# ----------------------------------------------------
 # Agent that aggregates local anomalies to form
 # global anomalies
-#----------------------------------------------------
+# ----------------------------------------------------
 def aggregate_anomalies(in_streams, out_stream, timed_window_size):
     """
     Parameters
@@ -164,28 +166,29 @@ def aggregate_anomalies(in_streams, out_stream, timed_window_size):
        provided they are within window_size of each other.
 
     """
-    aggregator = aggregate_large_magnitudes(
-        num_streams=2,
-        threshold=2)
-    zipped_stream = Stream('time zipped stream')
-    global_anomalies_stream = Stream('global anomalies stream')
-    timed_zip_agent(
-        in_streams=in_streams,
-        out_stream=zipped_stream)
+    aggregator = aggregate_large_magnitudes(num_streams=2, threshold=2)
+    zipped_stream = Stream("time zipped stream")
+    global_anomalies_stream = Stream("global anomalies stream")
+    timed_zip_agent(in_streams=in_streams, out_stream=zipped_stream)
     timed_window(
         func=aggregator.func,
         in_stream=zipped_stream,
         out_stream=global_anomalies_stream,
         window_duration=timed_window_size,
-        step_time=1)
+        step_time=1,
+    )
+
     def get_time(timed_element):
         timestamp, value = timed_element
         time_of_high_magnitude, num_high_magnitude = value
         return time_of_high_magnitude
+
     stream_to_file(
         in_stream=global_anomalies_stream,
-        filename='global_anomalies.txt',
-        element_function=get_time)
+        filename="global_anomalies.txt",
+        element_function=get_time,
+    )
+
 
 class aggregate_large_magnitudes(object):
     def __init__(self, num_streams, threshold):
@@ -193,6 +196,7 @@ class aggregate_large_magnitudes(object):
         self.threshold = threshold
         self.high_magnitude_streams = [False for _ in range(num_streams)]
         self.latest_output_timestamp = -1
+
     def func(self, window):
         # window is a list of lists
         first_element = window[0]
@@ -200,21 +204,13 @@ class aggregate_large_magnitudes(object):
         for time_and_magnitudes in window:
             timestamp, magnitudes = time_and_magnitudes
             for i in range(self.num_streams):
-                if (magnitudes[i] is not None and
-                    not self.high_magnitude_streams[i]):
+                if magnitudes[i] is not None and not self.high_magnitude_streams[i]:
                     self.high_magnitude_streams[i] = True
             num_high_magnitude_streams = sum(self.high_magnitude_streams)
             if num_high_magnitude_streams >= self.threshold:
-                new_timestamp = (first_timestamp + timestamp)/2
+                new_timestamp = (first_timestamp + timestamp) / 2
                 self.high_magnitude_streams = [False for _ in range(self.num_streams)]
                 if new_timestamp != self.latest_output_timestamp:
                     self.latest_output_timestamp = new_timestamp
                     return (new_timestamp, num_high_magnitude_streams)
             return _no_value
-
-
-
-    
-        
-        
-        

@@ -15,14 +15,18 @@ from op import map_element
 from stream import Stream, StreamArray
 from recent_values import recent_values
 
-def bandpass_filter_stream(in_stream, out_stream,
-                         lowcut, highcut, fs):
+
+def bandpass_filter_stream(in_stream, out_stream, lowcut, highcut, fs):
 
     fs = float(fs)
-    low_cut = lowcut*2/fs              # Normalising the filter band values to values between 0 and 1
-    high_cut = highcut*2/fs
-    b =  firwin(1001, cutoff = [low_cut, high_cut], window='blackmanharris', pass_zero=False)
-    print 'b is ', b
+    low_cut = (
+        lowcut * 2 / fs
+    )  # Normalising the filter band values to values between 0 and 1
+    high_cut = highcut * 2 / fs
+    b = firwin(
+        1001, cutoff=[low_cut, high_cut], window="blackmanharris", pass_zero=False
+    )
+    print "b is ", b
     bp = BP_FIR(b)
     bp.filter_stream(in_stream, out_stream)
 
@@ -30,10 +34,14 @@ def bandpass_filter_stream(in_stream, out_stream,
 def fir_bandpass_filter(lowcut, highcut, fs):
 
     fs = float(fs)
-    low_cut = lowcut*2/fs              # Normalising the filter band values to values between 0 and 1
-    high_cut = highcut*2/fs
-    b =  firwin(1001, cutoff = [low_cut, high_cut], window='blackmanharris', pass_zero=False)
-    return b 
+    low_cut = (
+        lowcut * 2 / fs
+    )  # Normalising the filter band values to values between 0 and 1
+    high_cut = highcut * 2 / fs
+    b = firwin(
+        1001, cutoff=[low_cut, high_cut], window="blackmanharris", pass_zero=False
+    )
+    return b
 
 
 class BP_FIR(object):
@@ -63,31 +71,30 @@ class BP_FIR(object):
        to implement SciPy's filtfilt, on a streaming setting.
 
     """
-    
-    
+
     def __init__(self, b):
         self.b = b
         self.a = [1]
         self.x = []
         self.y = []
         self.M = len(b)
-        
+
     def filter_sample(self, sample):
         """
         This method is equivalent to the lfilter from SciPy
         """
 
         self.x.append(sample)
-        for n in range(len(self.x)-1, len(self.x)):
-            temp=0
+        for n in range(len(self.x) - 1, len(self.x)):
+            temp = 0
             for k in range(self.M):
-                if n-k<0:
+                if n - k < 0:
                     break
                 else:
-                    temp+=self.b[k]*self.x[n-k]
+                    temp += self.b[k] * self.x[n - k]
             self.y.append(temp)
         return self.y[-1]
-    
+
     def filter_stream(self, in_stream, out_stream):
         """
         Filters the input stream to get the output stream
@@ -95,29 +102,29 @@ class BP_FIR(object):
 
         """
         map_element(self.filter_sample, in_stream, out_stream)
-    
+
 
 def test1():
-    
-    input_data = np.arange(10)+1
-    b =np.array([2.0,5.0])
+
+    input_data = np.arange(10) + 1
+    b = np.array([2.0, 5.0])
 
     for sample in input_data:
 
         bp_fir = BP_FIR(b)
         val_scipy = lfilter(b, [1], np.array([sample]))[0]
         val_manual = bp_fir.filter_sample(sample)
-        
+
         try:
             assert val_scipy == val_manual
 
         except AssertionError:
 
-            print("Manual is, ",val_manual)
-            print("SciPy is", val_scipy)
+            print ("Manual is, ", val_manual)
+            print ("SciPy is", val_scipy)
 
 
-def test2():# SET PARAMETERS
+def test2():  # SET PARAMETERS
     # fs: sample rate
     fs = 50
     # ma: maximum amplitude
@@ -136,26 +143,37 @@ def test2():# SET PARAMETERS
     # amplitudes and phase shifts. Each wave is a pure
     # frequency.
     wave_data_low_frequency = generate_sine_wave(
-        frequency=0.25, max_amplitude=ma, phase_shift=ps,
-        sample_rate=fs, time_duration=td)
+        frequency=0.25,
+        max_amplitude=ma,
+        phase_shift=ps,
+        sample_rate=fs,
+        time_duration=td,
+    )
     wave_data_medium_frequency = generate_sine_wave(
-        frequency=2.5, max_amplitude=ma, phase_shift=ps,
-        sample_rate=fs, time_duration=td)
+        frequency=2.5,
+        max_amplitude=ma,
+        phase_shift=ps,
+        sample_rate=fs,
+        time_duration=td,
+    )
     wave_data_high_frequency = generate_sine_wave(
-        frequency=15.0, max_amplitude=ma, phase_shift=ps,
-        sample_rate=fs, time_duration=td)
+        frequency=15.0,
+        max_amplitude=ma,
+        phase_shift=ps,
+        sample_rate=fs,
+        time_duration=td,
+    )
     # Generate a wave that is the sum of pure-frequency
     # waves.
     wave_data_combined_frequencies = (
-        wave_data_low_frequency +
-        wave_data_medium_frequency +
-        wave_data_high_frequency)
+        wave_data_low_frequency + wave_data_medium_frequency + wave_data_high_frequency
+    )
 
     # -----------------------------------------------------------
     # TEST BANDPASS FIR FILTER
     # -----------------------------------------------------------
-    x = StreamArray('x')
-    y = StreamArray('y')
+    x = StreamArray("x")
+    y = StreamArray("y")
     ## # Create a bandpass filter that operates on an input
     ## # stream x to produce the output stream y. This filter
     ## # uses firwin() from scipy.signal
@@ -175,7 +193,7 @@ def test2():# SET PARAMETERS
     after_filtering_data = recent_values(y)
 
     # Plot data
-    print 'PLOTTING FIR FILTER'
+    print "PLOTTING FIR FILTER"
     before_filtering_data = recent_values(x)
     after_filtering_data = recent_values(y)
     plt.figure(1)
@@ -186,11 +204,11 @@ def test2():# SET PARAMETERS
     plt.show()
 
 
-if __name__=='__main__':
+if __name__ == "__main__":
     ## print("First Test Now.. ")
     ## print("If assertion failed, then issue")
     ## test1()
-    print("Test1 Done\n\n")
-    print("Test2 Now ")
+    print ("Test1 Done\n\n")
+    print ("Test2 Now ")
     test2()
-    print("Test2 Done")
+    print ("Test2 Done")

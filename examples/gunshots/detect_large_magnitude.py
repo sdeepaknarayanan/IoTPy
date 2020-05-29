@@ -1,4 +1,3 @@
-
 """
 Creates a multiprocess, multithread application to detect high
 readings.
@@ -20,15 +19,19 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 from multicore import shared_memory_process, Multiprocess
 from VM import VM
 from distributed import distributed_process
+
 # stream is in core
 from stream import Stream
+
 # op, merge, source, sink are in agent_types
 from merge import zip_map
 from source import source_float_file
 from sink import stream_to_file
+
 # accelerometer_agents are in ("./accelerometer_agents")
 from accelerometer_agents import subtract_mean, magnitude_of_vector
 from accelerometer_agents import simple_anomalies, quench
+
 
 def detect_large_magnitude(sensor_name, filenames):
     # ----------------------------------------------------------------
@@ -52,18 +55,18 @@ def detect_large_magnitude(sensor_name, filenames):
 
         """
 
-        #------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # DECLARE INTERNAL STREAMS
-        #------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # magnitudes is a stream of magnitudes of a stream of vectors
         # where each vector is given by its e, n, z values.
-        magnitudes = Stream('magnitudes')
-        anomaly_times_before_quenching = Stream('prior quench')
+        magnitudes = Stream("magnitudes")
+        anomaly_times_before_quenching = Stream("prior quench")
         anomaly_times_after_quenching = out_streams[0]
 
-        #----------------------------------------------------
+        # ----------------------------------------------------
         # CREATE AGENTS
-        #----------------------------------------------------
+        # ----------------------------------------------------
         # This agent generates streams of magnitudes of vectors
         # from streams of the components of the vectors.
         magnitude_of_vector(in_streams, out_stream=magnitudes)
@@ -72,14 +75,16 @@ def detect_large_magnitude(sensor_name, filenames):
         simple_anomalies(
             in_stream=magnitudes,
             out_stream=anomaly_times_before_quenching,
-            threshold=0.005)
+            threshold=0.005,
+        )
         quench(
             in_stream=anomaly_times_before_quenching,
             out_stream=anomaly_times_after_quenching,
-            QUENCH_TIME=4)
-               
+            QUENCH_TIME=4,
+        )
+
         # Agents that copy streams into files for  later analysis.
-        stream_to_file(anomaly_times_after_quenching, 'local_anomalies.txt')
+        stream_to_file(anomaly_times_after_quenching, "local_anomalies.txt")
 
     # ----------------------------------------------------------------
     #  DEFINE SOURCES
@@ -98,39 +103,33 @@ def detect_large_magnitude(sensor_name, filenames):
           name of a file
 
         """
-        return source_float_file(
-            filename,
-            time_interval=0, num_steps=None).source_func
+        return source_float_file(filename, time_interval=0, num_steps=None).source_func
 
-    directions = ['e', 'n', 'z']
+    directions = ["e", "n", "z"]
     proc_0 = distributed_process(
         compute_func=compute_func,
         in_stream_names=directions,
-        out_stream_names=['out'],
+        out_stream_names=["out"],
         connect_sources=[
-            (directions[i], source(filenames[i]))
-            for i in range(len(directions))]
-        )
+            (directions[i], source(filenames[i])) for i in range(len(directions))
+        ],
+    )
 
     vm_0 = VM(
-        processes=[proc_0],
-        connections=[],
-        publishers=[(proc_0, 'out', sensor_name)])
+        processes=[proc_0], connections=[], publishers=[(proc_0, "out", sensor_name)]
+    )
     vm_0.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # filenames has data recorded from east, north,
     # and vertical directions from a sensor
     args = sys.argv
 
-    detect_large_magnitude(
-        sys.argv[1], sys.argv[2:]
-        )
-    
+    detect_large_magnitude(sys.argv[1], sys.argv[2:])
+
     # Example of a call to this function from the command line:
     #   detect_large_magnitude.py S1 S1.e.txt S1.n.txt S1.z.txt
-    # Here S1 is the name of the publication and 
+    # Here S1 is the name of the publication and
     # S1.e.txt S1.n.txt S1.z.txt are the source files for the
     # accelerometer readings in the three axes.
-    

@@ -4,6 +4,7 @@ import threading
 import random
 import multiprocessing
 import numpy as np
+
 sys.path.append(os.path.abspath("../concurrency"))
 sys.path.append(os.path.abspath("../core"))
 sys.path.append(os.path.abspath("../agent_types"))
@@ -13,9 +14,10 @@ from multicore import *
 from recent_values import recent_values
 from basics import map_e, map_l, map_w, merge_e, sink_e
 
+
 def test_0():
-    NUM_STEPS=5
-    STEP_SIZE=4
+    NUM_STEPS = 5
+    STEP_SIZE = 4
     DATA = list(range(NUM_STEPS * STEP_SIZE))
 
     @sink_e
@@ -42,41 +44,31 @@ def test_0():
     # indicate that the source generation has finished.
     def source_generator(source):
         for i in range(NUM_STEPS):
-            data_segment = DATA[i*STEP_SIZE : (i+1)*STEP_SIZE]
+            data_segment = DATA[i * STEP_SIZE : (i + 1) * STEP_SIZE]
             copy_data_to_source(data_segment, source)
             time.sleep(0.001)
         source_finished(source)
         return
 
     # Specify processes and connections.
-    processes = \
-      {
-        'process':
-           {'in_stream_names_types': [('in', 'i')],
-            'out_stream_names_types': [],
-            'compute_func': compute_func,
-            'sources':
-              {'example_source':
-                  {'type': 'i',
-                   'func': source_generator
-                  },
-               }
-           }
-      }
-    
-    connections = \
-      {
-          'process' :
-            {
-                'example_source' : [('process', 'in')]
-            }
-      }
+    processes = {
+        "process": {
+            "in_stream_names_types": [("in", "i")],
+            "out_stream_names_types": [],
+            "compute_func": compute_func,
+            "sources": {"example_source": {"type": "i", "func": source_generator},},
+        }
+    }
+
+    connections = {"process": {"example_source": [("process", "in")]}}
 
     multicore(processes, connections)
 
+
 def test_source():
     test_0()
-    print ('TEST OF SOURCE IS SUCCESSFUL.')
+    print("TEST OF SOURCE IS SUCCESSFUL.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_source()

@@ -1,4 +1,3 @@
-
 """
 Creates a multiprocess, multithread application to detect high
 readings.
@@ -19,25 +18,30 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # multicore is in concurrency
 from multicore import multicore
+
 # stream is in core
 from stream import Stream
+
 # op, merge, source, sink are in agent_types
-#from merge import zip_map
-#from source import source_float_file
+# from merge import zip_map
+# from source import source_float_file
 from sink import stream_to_file
+
 # accelerometer_agents are in ./accelerometer_agents
 from accelerometer_agents import subtract_mean, magnitude_of_vector
 from accelerometer_agents import simple_anomalies, quench
+
 # basics is in ../../IoTPy/helper_functions
 from basics import merge_e
+
 # multicore is in "../../IoTPy/multiprocessing"
 from multicore import *
 from print_stream import print_stream
 
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 #  A SOURCE
 # Thread that puts data from a file on a source stream.
-#-------------------------------------------------------------
+# -------------------------------------------------------------
 class read_file(object):
     """
     Parameters
@@ -49,17 +53,19 @@ class read_file(object):
             Large window_size is faster.
 
     """
+
     def __init__(self, filename, filetype=float, window_size=100):
         self.filename = filename
         self.filetype = filetype
         self.window_size = window_size
+
     def generate_source_data(self, source):
         with open(self.filename) as the_file:
             data = list(map(self.filetype, the_file))
             for i in range(0, len(data), self.window_size):
                 # Generate a segment of length window_size
                 # on this source and then yield thread.
-                window = data[i : i+self.window_size]
+                window = data[i : i + self.window_size]
                 copy_data_to_source(window, source)
                 # Sleep for an arbitrarily small positive value
                 # to yield this thread.
@@ -91,32 +97,34 @@ def detect_large_magnitudes(in_streams, out_streams):
 
     """
 
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # DECLARE INTERNAL STREAMS
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # demeaned is a list of 3 streams which are the streams from the
     # source with their means subtracted.
-    demeaned = [Stream('demeaned_'+str(i)) for i in range(3)]
+    demeaned = [Stream("demeaned_" + str(i)) for i in range(3)]
     # magnitudes is a stream of magnitudes of samples
-    magnitudes = Stream('magnitudes')
+    magnitudes = Stream("magnitudes")
     # Times are integers.
     # anomaly_times_before_quenching are times of anomalously high
     # magnitudes
-    anomaly_times_before_quenching = Stream('prior quench')
+    anomaly_times_before_quenching = Stream("prior quench")
     # anomaly_times_after_quenching is the same as
     # anomaly_times_before_quenching after discarding anomalies that
     # are too close together in time.
-    anomaly_times_after_quenching = Stream('after quench')
+    anomaly_times_after_quenching = Stream("after quench")
 
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # CREATE AGENTS
-    #----------------------------------------------------
+    # ----------------------------------------------------
     # Subtract means from source streams.
     for i in range(3):
         subtract_mean(
-            in_stream = in_streams[i],
+            in_stream=in_streams[i],
             out_stream=demeaned[i],
-            window_size=100, step_size=100)
+            window_size=100,
+            step_size=100,
+        )
 
     # Compute magnitudes of vector samples.
     # This agent generates streams of magnitudes of vectors
@@ -132,7 +140,8 @@ def detect_large_magnitudes(in_streams, out_streams):
     simple_anomalies(
         in_stream=magnitudes,
         out_stream=anomaly_times_before_quenching,
-        MAGNITUDE_THRESHOLD=0.0001)
+        MAGNITUDE_THRESHOLD=0.0001,
+    )
 
     # This agent discards timestamps that are closer
     # together than QUENCH_TIME.
@@ -142,11 +151,13 @@ def detect_large_magnitudes(in_streams, out_streams):
     quench(
         in_stream=anomaly_times_before_quenching,
         out_stream=anomaly_times_after_quenching,
-        QUENCH_TIME=5)
+        QUENCH_TIME=5,
+    )
 
     # Agents that copy streams into files for later analysis.
-    stream_to_file(anomaly_times_after_quenching, 'local_anomalies.txt')
+    stream_to_file(anomaly_times_after_quenching, "local_anomalies.txt")
     return
+
 
 def detect_large_signal_from_sensor(sensor_name, filenames):
 
@@ -164,31 +175,28 @@ def detect_large_signal_from_sensor(sensor_name, filenames):
     # in its own thread, and each of which generates a stream.
     #
     # This process has no actuators.
-    processes = \
-      {
-        'process':
-           {'in_stream_names_types': [ ('e', 'f'), ('n', 'f'), ('z', 'f') ],
-            'out_stream_names_types': [],
-            'compute_func': detect_large_magnitudes,
-            'sources':
-              {'east':
-                  {'type': 'f',
-                   'func': read_file(filename=filenames[0]).generate_source_data
-                  },
-               'north':
-                  {'type': 'f',
-                   'func': read_file(
-                       filename=filenames[1]).generate_source_data
-                  },
-              'vertical':
-                  {'type': 'f',
-                   'func': read_file(
-                       filename=filenames[2]).generate_source_data
-                  }
-               },
-            'actuators': {}
-           }
-      }
+    processes = {
+        "process": {
+            "in_stream_names_types": [("e", "f"), ("n", "f"), ("z", "f")],
+            "out_stream_names_types": [],
+            "compute_func": detect_large_magnitudes,
+            "sources": {
+                "east": {
+                    "type": "f",
+                    "func": read_file(filename=filenames[0]).generate_source_data,
+                },
+                "north": {
+                    "type": "f",
+                    "func": read_file(filename=filenames[1]).generate_source_data,
+                },
+                "vertical": {
+                    "type": "f",
+                    "func": read_file(filename=filenames[2]).generate_source_data,
+                },
+            },
+            "actuators": {},
+        }
+    }
 
     # STEP 2. CONNECTIONS AMONG STREAMS AND SOURCES.
     # Connect sources and outputs of processes to inputs of processes.
@@ -198,43 +206,33 @@ def detect_large_signal_from_sensor(sensor_name, filenames):
     # Likewise, the source 'north' of the process feeds the input
     # stream called 'n' of the process, and,
     # the source 'vertical' of the process feeds the input stream called
-    # 'z' of the process. 
-    connections = \
-      {
-          'process' :
-            {
-                'east' : [ ('process', 'e') ],
-                'north' : [  ('process', 'n') ],
-                'vertical' : [  ('process', 'z') ]
-            }
-      }
+    # 'z' of the process.
+    connections = {
+        "process": {
+            "east": [("process", "e")],
+            "north": [("process", "n")],
+            "vertical": [("process", "z")],
+        }
+    }
 
     multicore(processes, connections)
 
-if __name__ == '__main__':
-    detect_large_signal_from_sensor(sensor_name='S3',
-                                    filenames= ['S3_short.e.txt',
-                                                'S3_short.n.txt',
-                                                'S3_short.z.txt'])
 
+if __name__ == "__main__":
+    detect_large_signal_from_sensor(
+        sensor_name="S3",
+        filenames=["S3_short.e.txt", "S3_short.n.txt", "S3_short.z.txt"],
+    )
 
-
-
-
-
-
-
-    
     ## # filenames has data recorded from east, north,
     ## # and vertical directions from a sensor
     ## args = sys.argv
-    
+
     ## detect_large_signal_from_sensor(
     ##     sys.argv[1], sys.argv[2:]
     ##     )
     ## # Example of a call to this function
     ## # detect_large_signal_from_sensor S1 S1.e.txt S1.n.txt S1.z.txt
-    ## # Here S1 is the name of the publication and 
+    ## # Here S1 is the name of the publication and
     ## # S1.e.txt S1.n.txt S1.z.txt are the source files for the
     ## # accelerometer readings in the three axes.
-    

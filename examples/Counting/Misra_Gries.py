@@ -7,6 +7,7 @@ date: 26 July, 2019
 """
 import sys
 import os
+
 sys.path.append(os.path.abspath("../../IoTPy/multiprocessing"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
@@ -14,21 +15,24 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # multicore is in ../../IoTPy/multiprocessing
 from multicore import run_single_process_single_source
+
 # stream is in ../../IoTPy/core
 from stream import Stream
+
 # op, sink, source are in ../../IoTPy/agent_types
-from op import map_element 
+from op import map_element
 from source import source_int_file
 from sink import stream_to_file
+
 # helper_control is in ../../IoTPy/helper_functions
 from helper_control import _no_value
 
-#------------------------------------------------------------------
-#THE MISRA GRIES ALGORITHM
-#------------------------------------------------------------------
+# ------------------------------------------------------------------
+# THE MISRA GRIES ALGORITHM
+# ------------------------------------------------------------------
 
-def misra_gries_process_element(
-        v, state, M):
+
+def misra_gries_process_element(v, state, M):
 
     """
     This function updates the state for a new element
@@ -82,7 +86,7 @@ def misra_gries_process_element(
     elif None in keys:
         pos = keys.index(None)
         counts[pos] += 1
-        keys[pos]  = v
+        keys[pos] = v
     # If the input element and None are not in keys
     # then decrement counts, and set keys[i] to
     # None for any zero count.
@@ -92,7 +96,7 @@ def misra_gries_process_element(
             if counts[i] == 0:
                 keys[i] = None
     # FINISHED UPDATING KEYS AND COUNTS.
-    
+
     if index < M:
         # Not enough inputs for an output.
         # So, output _no_value.
@@ -134,24 +138,28 @@ def misra_gries(k, in_stream, out_stream, M=1):
     # produces the output stream.
 
     # Set up the initial state.
-    keys = [None]*k
-    counts = [0]*k
+    keys = [None] * k
+    counts = [0] * k
     index = 0
     initial_state = (keys, counts, index)
     # Create agent
-    map_element(func=misra_gries_process_element,
-                in_stream=in_stream,
-                out_stream=out_stream,
-                state=initial_state,
-                M=M)
+    map_element(
+        func=misra_gries_process_element,
+        in_stream=in_stream,
+        out_stream=out_stream,
+        state=initial_state,
+        M=M,
+    )
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 #            TESTS
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+
 
 def test_Misra_Gries(
-        in_filename, out_filename, num_heavy_hitters,
-        reporting_window_size=1):
+    in_filename, out_filename, num_heavy_hitters, reporting_window_size=1
+):
     """
     Parameters
     ----------
@@ -177,38 +185,31 @@ def test_Misra_Gries(
     def compute_func(in_streams, out_streams):
         # Specify internal streams. This stream is output by
         # the misra_gries agent and input by the stream_to_file agent.
-        misra_gries_output_stream = Stream('Misra Gries output')
+        misra_gries_output_stream = Stream("Misra Gries output")
         # Create the misra_gries agent.
         misra_gries(
             k=num_heavy_hitters,
-            in_stream=in_streams[0], # input from source
-            out_stream=misra_gries_output_stream, # Goes to printer
-            M=reporting_window_size)
+            in_stream=in_streams[0],  # input from source
+            out_stream=misra_gries_output_stream,  # Goes to printer
+            M=reporting_window_size,
+        )
         # Create the stream_to_file agent.
-        stream_to_file(
-            in_stream=misra_gries_output_stream,
-            filename=out_filename)
+        stream_to_file(in_stream=misra_gries_output_stream, filename=out_filename)
 
     # MAKE AND RUN THE SHARED MEMORY PROCESS
     run_single_process_single_source(
-        source_func=s.source_func, compute_func=compute_func)
+        source_func=s.source_func, compute_func=compute_func
+    )
 
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 #            RUN TESTS
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_Misra_Gries(
-        in_filename='misra_gries_input.txt',
-        out_filename='misra_gries_output.txt',
+        in_filename="misra_gries_input.txt",
+        out_filename="misra_gries_output.txt",
         num_heavy_hitters=2,
-        reporting_window_size=1)
-
-
-
-
-
-
-
-
+        reporting_window_size=1,
+    )

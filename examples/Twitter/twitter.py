@@ -1,4 +1,3 @@
-
 import tweepy
 import pprint
 import json
@@ -6,6 +5,7 @@ import threading
 
 import sys
 import os
+
 sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 sys.path.append(os.path.abspath("../../IoTPy/core"))
 sys.path.append(os.path.abspath("../../IoTPy/agent_types"))
@@ -15,13 +15,16 @@ import time
 from sink import sink_element
 from stream import Stream
 from multicore import shared_memory_process, Multiprocess
+
 # nltk: Natural Language Toolkit.
 # open source, free toolkit
 # https://www.nltk.org/
 import nltk
-nltk.download('punkt')
+
+nltk.download("punkt")
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+
 # Sentiment analysis
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
@@ -30,11 +33,12 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 # http://www.tweepy.org/
 
 
-# Variables that contain the user credentials to access Twitter API 
+# Variables that contain the user credentials to access Twitter API
 access_token = "999118734320009216-jaE4Rmc6fU11sMmBKb566YTFAJoMPV5"
 access_token_secret = "6ZxqJdK2RU6iridMX1MzSqr3uNpQsC9fv1E6otpZquLiF"
 consumer_key = "Iv6RTiO7Quw3ivH0GWPWqbiD4"
 consumer_secret = "theWmGwcKFG76OtTerxwhrxfX5nSDqGDWB2almLlp2ndRpxACm"
+
 
 class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
     """
@@ -65,9 +69,15 @@ class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
     """
 
     def __init__(
-            self, consumer_key, consumer_secret,
-            access_token, access_token_secret,
-            trackwords, out_stream, num_steps=0):
+        self,
+        consumer_key,
+        consumer_secret,
+        access_token,
+        access_token_secret,
+        trackwords,
+        out_stream,
+        num_steps=0,
+    ):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -83,7 +93,7 @@ class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
         Call back by Twitter
 
         """
-        print(status)
+        print (status)
 
     def on_data(self, data):
         """
@@ -94,11 +104,11 @@ class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
 
         """
         try:
-            if data is None: return True
+            if data is None:
+                return True
 
             # Put the data in the scheduler's input queue
-            Stream.scheduler.input_queue.put(
-                (self.out_stream.name, json.loads(data)))
+            Stream.scheduler.input_queue.put((self.out_stream.name, json.loads(data)))
             # Increment the number of puts into the queue
             self.n += 1
             # Exit if enough steps have completed.
@@ -109,10 +119,10 @@ class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
             return True
         except BaseException as e:
             print
-            if not e or str(e) == '':
-                print 'No data from Twitter'
+            if not e or str(e) == "":
+                print "No data from Twitter"
             else:
-                print("Error on_data from Twitter: %s" % str(e))
+                print ("Error on_data from Twitter: %s" % str(e))
                 print "See TwitterTrackwordsToStream.on_data()"
             print
             sys.exit()
@@ -136,16 +146,21 @@ class TwitterTrackwordsToStream(tweepy.streaming.StreamListener):
 
         """
         self.twitter_stream.filter(track=self.trackwords)
-        
 
     def get_thread_object(self):
         self.setup()
         return threading.Thread(target=self.start)
 
+
 def twitter_to_stream(
-        consumer_key, consumer_secret,
-        access_token, access_token_secret,
-        trackwords, out_stream, num_steps):
+    consumer_key,
+    consumer_secret,
+    access_token,
+    access_token_secret,
+    trackwords,
+    out_stream,
+    num_steps,
+):
     """
                       
     Get Tweets from Twitter and put them on out_stream.
@@ -167,74 +182,95 @@ def twitter_to_stream(
 
     """
     obj = TwitterTrackwordsToStream(
-        consumer_key, consumer_secret,
-        access_token, access_token_secret,
-        trackwords, out_stream, num_steps)
+        consumer_key,
+        consumer_secret,
+        access_token,
+        access_token_secret,
+        trackwords,
+        out_stream,
+        num_steps,
+    )
     return obj.get_thread_object()
 
 
 def print_tweets(tweet):
-    if 'extended_tweet' in tweet:
-        text = tweet['extended_tweet']['full_text']
-    elif 'text' in tweet:
-        text = tweet['text']
+    if "extended_tweet" in tweet:
+        text = tweet["extended_tweet"]["full_text"]
+    elif "text" in tweet:
+        text = tweet["text"]
     else:
         text = str()
     followers_count = 0
     retweet_count = 0
-    if 'user' in tweet:
-        tweet_user = tweet['user']
-        if 'followers_count' in tweet_user:
-            followers_count = tweet_user['followers_count']
-        if 'friends_count' in tweet_user:
-            friends_count = tweet_user['friends_count']
-    if 'retweet_count' in tweet:
-        retweet_count = tweet['retweet_count']
+    if "user" in tweet:
+        tweet_user = tweet["user"]
+        if "followers_count" in tweet_user:
+            followers_count = tweet_user["followers_count"]
+        if "friends_count" in tweet_user:
+            friends_count = tweet_user["friends_count"]
+    if "retweet_count" in tweet:
+        retweet_count = tweet["retweet_count"]
 
     # print output
-    print 'Text is: ', text
+    print "Text is: ", text
     print
-    print 'followers_count is: ', followers_count
-    print 'retweet_count is: ', retweet_count
-    print 'friends_count is: ', friends_count
-    print '--------------------------------------'
+    print "followers_count is: ", followers_count
+    print "retweet_count is: ", retweet_count
+    print "friends_count is: ", friends_count
+    print "--------------------------------------"
     print
 
+
 def twitter_analysis(
-        consumer_key, consumer_secret,
-        access_token, access_token_secret,
-        trackwords, tweet_analyzer, num_tweets):
+    consumer_key,
+    consumer_secret,
+    access_token,
+    access_token_secret,
+    trackwords,
+    tweet_analyzer,
+    num_tweets,
+):
     # SOURCE
     def source(out_stream):
         return twitter_to_stream(
-            consumer_key, consumer_secret,
-            access_token, access_token_secret,
-            trackwords, out_stream, num_tweets)
+            consumer_key,
+            consumer_secret,
+            access_token,
+            access_token_secret,
+            trackwords,
+            out_stream,
+            num_tweets,
+        )
+
     # COMPUTATIONAL FUNCTION
     def compute_func(in_streams, out_streams):
-        sink_element(func=tweet_analyzer,
-                     in_stream=in_streams[0])
+        sink_element(func=tweet_analyzer, in_stream=in_streams[0])
+
     # PROCESSES
     proc = shared_memory_process(
         compute_func=compute_func,
-        in_stream_names=['in'],
+        in_stream_names=["in"],
         out_stream_names=[],
-        connect_sources=[('in', source)],
+        connect_sources=[("in", source)],
         connect_actuators=[],
-        name='proc')
+        name="proc",
+    )
     # CREATE AND RUN MULTIPROCESS APPLICATION
     mp = Multiprocess(processes=[proc], connections=[])
     mp.run()
 
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # TEST
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     twitter_analysis(
-        consumer_key, consumer_secret,
-        access_token, access_token_secret,
-        trackwords=['Trump'], tweet_analyzer=print_tweets,
-        num_tweets=5)
-
+        consumer_key,
+        consumer_secret,
+        access_token,
+        access_token_secret,
+        trackwords=["Trump"],
+        tweet_analyzer=print_tweets,
+        num_tweets=5,
+    )

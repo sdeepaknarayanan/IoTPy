@@ -24,35 +24,41 @@ Variables
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def generate_trignometric_wave(
-        func, frequency, max_amplitude,
-        phase_shift, sample_rate, time_duration):
+    func, frequency, max_amplitude, phase_shift, sample_rate, time_duration
+):
     num_samples = int(time_duration * sample_rate)
     time_sequence = np.linspace(0, time_duration, num_samples, endpoint=False)
-    return max_amplitude*func(2*np.pi*frequency*time_sequence + phase_shift)
+    return max_amplitude * func(2 * np.pi * frequency * time_sequence + phase_shift)
+
 
 def generate_sine_wave(
-        frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration):
+    frequency, max_amplitude, phase_shift, sample_rate, time_duration
+):
     return generate_trignometric_wave(
-        np.sin, frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration)
+        np.sin, frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
+
 
 def generate_cosine_wave(
-        frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration):
+    frequency, max_amplitude, phase_shift, sample_rate, time_duration
+):
     return generate_trignometric_wave(
-        np.cos, frequency, max_amplitude, phase_shift,
-        sample_rate, time_duration)
+        np.cos, frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
+
 
 def generate_square_wave(
-        frequency, max_amplitude,
-        phase_shift, sample_rate, time_duration):
+    frequency, max_amplitude, phase_shift, sample_rate, time_duration
+):
     num_samples = time_duration * sample_rate
     time_sequence = np.linspace(0, time_duration, num_samples, endpoint=False)
+
     def func(v):
-        return - np.sign((v - v.astype(int)) - 0.45)
-    return max_amplitude*func(frequency*time_sequence + phase_shift)
+        return -np.sign((v - v.astype(int)) - 0.45)
+
+    return max_amplitude * func(frequency * time_sequence + phase_shift)
 
 
 def plot_signal(signal, time_duration, sample_rate):
@@ -64,7 +70,9 @@ def plot_signal(signal, time_duration, sample_rate):
     plt.show()
     return
 
+
 # TESTS
+
 
 def test():
     # Plot
@@ -74,16 +82,22 @@ def test():
     sample_rate = 100
     time_duration = 2
 
-
-    signal = generate_square_wave(frequency, max_amplitude, phase_shift, sample_rate, time_duration)
+    signal = generate_square_wave(
+        frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     plot_signal(signal, time_duration, sample_rate)
 
-    phase_shift = np.pi/2.0 # 90 degrees 
-    signal = generate_sine_wave(frequency, max_amplitude, phase_shift, sample_rate, time_duration)
+    phase_shift = np.pi / 2.0  # 90 degrees
+    signal = generate_sine_wave(
+        frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     plot_signal(signal, time_duration, sample_rate)
 
-    signal = generate_cosine_wave(frequency, max_amplitude, phase_shift, sample_rate, time_duration)
+    signal = generate_cosine_wave(
+        frequency, max_amplitude, phase_shift, sample_rate, time_duration
+    )
     plot_signal(signal, time_duration, sample_rate)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

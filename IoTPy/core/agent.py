@@ -22,7 +22,7 @@ Named_Tuple
         An InList defines the list slice:
                    list[start:stop]
 """
-InList = namedtuple('InList', ['list', 'start', 'stop'])
+InList = namedtuple("InList", ["list", "start", "stop"])
 
 
 class Agent(object):
@@ -138,15 +138,24 @@ class Agent(object):
 
     """
 
-    def __init__(self, in_streams, out_streams, transition,
-                 state=None, call_streams=None,
-                 name=None):
+    def __init__(
+        self,
+        in_streams,
+        out_streams,
+        transition,
+        state=None,
+        call_streams=None,
+        name=None,
+    ):
 
         # Check types of inputs
         assert isinstance(in_streams, list) or isinstance(in_streams, tuple)
         assert isinstance(out_streams, list) or isinstance(in_streams, tuple)
-        assert (call_streams is None or isinstance(call_streams, list) or
-                isinstance(in_streams, tuple))
+        assert (
+            call_streams is None
+            or isinstance(call_streams, list)
+            or isinstance(in_streams, tuple)
+        )
 
         # Copy parameters into object attributes
         self.in_streams = in_streams
@@ -155,15 +164,14 @@ class Agent(object):
         self.state = state
         self.call_streams = call_streams
         self.name = name
-        
+
         # The default (i.e. when call_streams is None) is that
         # the agent executes a state transition when any
         # of its input streams is modified. If call_streams
         # is not None, then the agent executes a state
         # transition only when one of the specified call_streams is
         # modified.
-        self.call_streams = in_streams if call_streams is None \
-          else call_streams
+        self.call_streams = in_streams if call_streams is None else call_streams
 
         # Register this agent as a reader of its input streams.
         for s in self.in_streams:
@@ -194,7 +202,8 @@ class Agent(object):
         up when streams are modified.
 
         """
-        for s in self.call_streams: s.delete_subscriber(self)
+        for s in self.call_streams:
+            s.delete_subscriber(self)
 
     def restart(self):
         """
@@ -206,7 +215,8 @@ class Agent(object):
         in most applications.
 
         """
-        for s in self.call_streams: s.register_subscriber(self)
+        for s in self.call_streams:
+            s.register_subscriber(self)
         self._in_lists = [InList([], 0, 0) for s in self.in_streams]
         self._in_lists_start_values = [0 for s in self.in_streams]
 
@@ -233,9 +243,9 @@ class Agent(object):
             
 
         """
-        #----------------------------------------------------------------
+        # ----------------------------------------------------------------
         # PART 1
-        #----------------------------------------------------------------
+        # ----------------------------------------------------------------
         # Set up data structures, _in_lists, _out_lists, for
         # the state transition.
 
@@ -249,17 +259,18 @@ class Agent(object):
         # s.start[self]. Therefore agent self will only access the slice
         #           s.recent[s.start[self]:s.stop]
         # of stream s.
-        self._in_lists = [InList(s.recent, s.start[self], s.stop)\
-                          for s in self.in_streams]
+        self._in_lists = [
+            InList(s.recent, s.start[self], s.stop) for s in self.in_streams
+        ]
 
         # Initially, the output lists of the agent are empty.
         # Values will be appended to these output lists during a
         # state transition.
         self._out_lists = [[] for s in self.out_streams]
 
-        #----------------------------------------------------------------
+        # ----------------------------------------------------------------
         # PART 2
-        #----------------------------------------------------------------
+        # ----------------------------------------------------------------
         # Execute the transition_function.
 
         # The transition function has two input parameters:
@@ -277,12 +288,13 @@ class Agent(object):
 
         # The result of the transition is:
         #     self.transition(self._in_lists, self.state)
-        self._out_lists, self.state, self._in_lists_start_values  = \
-          self.transition(self._in_lists, self.state)
-            
-        #----------------------------------------------------------------
+        self._out_lists, self.state, self._in_lists_start_values = self.transition(
+            self._in_lists, self.state
+        )
+
+        # ----------------------------------------------------------------
         # PART 3
-        #----------------------------------------------------------------
+        # ----------------------------------------------------------------
         # Update data structures after the state transition.
         # Part 3a:
         # For the j-th input stream, in_streams[j], inform this stream
@@ -293,34 +305,37 @@ class Agent(object):
         # state transition.
 
         # Part 3a
-        assert(len(self.in_streams) == len(self._in_lists_start_values)),\
-          'Error in agent named {0}. The number, {1}, of input start values returned'\
-          ' by a state transition must equal, {2}, the number of input streams'.\
-          format(self.name, len(self._in_lists_start_values), len(self.in_streams))
+        assert len(self.in_streams) == len(self._in_lists_start_values), (
+            "Error in agent named {0}. The number, {1}, of input start values returned"
+            " by a state transition must equal, {2}, the number of input streams".format(
+                self.name, len(self._in_lists_start_values), len(self.in_streams)
+            )
+        )
         for j in range(len(self.in_streams)):
             self.in_streams[j].set_start(self, self._in_lists_start_values[j])
 
         # Part 3b
         # If a parameter is None, convert it into the empty list.
-        if not self._out_lists: self._out_lists = list()
-        assert len(self._out_lists) == len(self.out_streams), \
-          'Error in agent named {0}. The number of output values, {1}, returned'\
-          ' by a state transition must equal, {2}, the number of output streams.'\
-          ' The output values are {3}'.format(
-              self.name, len(self._out_lists), len(self.out_streams), self._out_lists)
+        if not self._out_lists:
+            self._out_lists = list()
+        assert len(self._out_lists) == len(self.out_streams), (
+            "Error in agent named {0}. The number of output values, {1}, returned"
+            " by a state transition must equal, {2}, the number of output streams."
+            " The output values are {3}".format(
+                self.name, len(self._out_lists), len(self.out_streams), self._out_lists
+            )
+        )
         # Put each of the output lists computed in the state
         # transition into each of the output streams.
         for j in range(len(self.out_streams)):
             self.out_streams[j].extend(self._out_lists[j])
 
-#-------------------------------------------------------------------------
+
+# -------------------------------------------------------------------------
 class BasicAgent(Agent):
     def __init__(self, call_streams, next):
         super(BasicAgent, self).__init__(
-            in_streams=[], out_streams=[], transition=None,
-            call_streams=call_streams)
+            in_streams=[], out_streams=[], transition=None, call_streams=call_streams
+        )
         self.next = next
         return
-        
-        
-    

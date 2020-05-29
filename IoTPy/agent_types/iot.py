@@ -21,13 +21,17 @@ These arguments may include streams and agents.
 
 """
 from ..core.agent import Agent, InList
-from ..core.stream import StreamArray, Stream 
+from ..core.stream import StreamArray, Stream
 from ..core.helper_control import _no_value, _multivalue
+
 # agent, stream, helper_control are in ../core
 from ..helper_functions.recent_values import recent_values
+
 #  recent_values is in ../helper_functions
 from .check_agent_parameter_types import *
+
 # check_agent_parameter_types is in current folder
+
 
 def iot(func, in_stream, *args, **kwargs):
     """
@@ -62,7 +66,7 @@ def iot(func, in_stream, *args, **kwargs):
     """
     # The transition function for the map agent.
     def transition(in_lists, state):
-        # STEP 1. GET THE SLICES -- LISTS OR ARRAYS -- INTO STREAMS. 
+        # STEP 1. GET THE SLICES -- LISTS OR ARRAYS -- INTO STREAMS.
         # A is a list or an array
         A = in_lists[0].list[in_lists[0].start : in_lists[0].stop]
 
@@ -71,23 +75,27 @@ def iot(func, in_stream, *args, **kwargs):
         # agent will no longer read elements of in_stream before
         # index in_lists[0].start + new_start
         new_start = func(A, *args, **kwargs)
-        assert isinstance(new_start, int), \
-          'funct in iot() must return a nonnegative integer' \
-          ' but it returned {0}'.format(new_start)
-        assert new_start >= 0, \
-          ' func in iot() must return nonnegative integer, but it '\
-          ' returned {0} : '.format(new_start)
+        assert isinstance(new_start, int), (
+            "funct in iot() must return a nonnegative integer"
+            " but it returned {0}".format(new_start)
+        )
+        assert new_start >= 0, (
+            " func in iot() must return nonnegative integer, but it "
+            " returned {0} : ".format(new_start)
+        )
 
         # STEP 3. RETURN VALUES FOR STANDARD AGENT
         # Return (i) list of output stream: this is empty.
         # (ii) next state: this is unchanged.
         # (iii) list of new pointers into input streams.
-        return ([], state, [new_start+in_lists[0].start])
+        return ([], state, [new_start + in_lists[0].start])
+
     # Finished transition
 
     # Create agent
     # This agent has no output streams, and so out_streams is [].
     return Agent([in_stream], [], transition)
+
 
 def iot_merge(func, in_streams, *args, **kwargs):
     """
@@ -127,30 +135,31 @@ def iot_merge(func, in_streams, *args, **kwargs):
     """
     # The transition function for the map agent.
     def transition(in_lists, state):
-        # 1. GET THE SLICES -- LISTS OR ARRAYS -- INTO STREAMS. 
+        # 1. GET THE SLICES -- LISTS OR ARRAYS -- INTO STREAMS.
         # A_list is a list of lists or a list of arrays.
-        A_list = [in_list.list[in_list.start : in_list.stop]
-                  for in_list in in_lists]
+        A_list = [in_list.list[in_list.start : in_list.stop] for in_list in in_lists]
 
         # 2. CALL FUNC.
         # func must return a list of indices (new_starts) into
         # the input lists that indicate that it will no longer
         # read elements earlier than the pointers.
         new_starts = func(A_list, *args, **kwargs)
-        assert isinstance(new_starts, list), \
-          'func in iot_merge() must return list of new starting indices'\
-          ' into the input lists but function returns {0}'.\
-          format(new_starts)
-        assert len(new_starts) == len(A_list), \
-          'func in iot_merge() must return one starting index for each' \
-          ' input list. The number of input lists is {0} ' \
-          ' and the number of values returned is {1}'.\
-          format(len(A_list), len(new_starts))
+        assert isinstance(new_starts, list), (
+            "func in iot_merge() must return list of new starting indices"
+            " into the input lists but function returns {0}".format(new_starts)
+        )
+        assert len(new_starts) == len(A_list), (
+            "func in iot_merge() must return one starting index for each"
+            " input list. The number of input lists is {0} "
+            " and the number of values returned is {1}".format(
+                len(A_list), len(new_starts)
+            )
+        )
         for new_start in new_starts:
-            assert isinstance(new_start, int) and (new_start >= 0), \
-              ' func in iot_merge must return a nonnegative integer for each' \
-              ' input list. One of the values returned is {0}'.\
-              format(new_start)
+            assert isinstance(new_start, int) and (new_start >= 0), (
+                " func in iot_merge must return a nonnegative integer for each"
+                " input list. One of the values returned is {0}".format(new_start)
+            )
 
         # 3. RETURN VALUES FOR STANDARD AGENT
         for i in range(len(new_starts)):
@@ -159,6 +168,7 @@ def iot_merge(func, in_streams, *args, **kwargs):
         # (ii) next state: this is unchanged.
         # (iii) new pointers into input streams.
         return ([], state, new_starts)
+
     # Finished transition
 
     # Create agent

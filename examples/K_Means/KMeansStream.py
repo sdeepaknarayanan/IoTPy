@@ -49,6 +49,7 @@ class KMeansStream:
         The average error per window of data trained.
 
     """
+
     def __init__(self, draw, output, k, incremental=True, figsize=(1000, 500)):
         self.draw = draw
         self.output = output
@@ -64,20 +65,23 @@ class KMeansStream:
             self.source = init_plot(figsize)
 
     def _init_func(self):
-
         def train_function(x, y, model, window_state):
             if not model:
 
                 model = Model(self.k)
             if model.centroids is not None and self.incremental:
-                [centroids, index, i] = kmeans(x, model.k, model.centroids,
-                                               draw=self.draw,
-                                               output=self.output,
-                                               source=self.source)
+                [centroids, index, i] = kmeans(
+                    x,
+                    model.k,
+                    model.centroids,
+                    draw=self.draw,
+                    output=self.output,
+                    source=self.source,
+                )
             else:
-                [centroids, index, i] = kmeans(x, model.k, draw=self.draw,
-                                               output=self.output,
-                                               source=self.source)
+                [centroids, index, i] = kmeans(
+                    x, model.k, draw=self.draw, output=self.output, source=self.source
+                )
             model.centroids = centroids
             self.centroids = centroids
             error = evaluate_error(x, centroids, index)
@@ -96,8 +100,7 @@ class KMeansStream:
             if self.output:
                 print "Average number of iterations: ", self.avg_iterations
                 print "Average error: ", self.avg_error, "\n"
-            return findClosestCentroids(np.array(x).reshape(1, len(x)),
-                                        model.centroids)
+            return findClosestCentroids(np.array(x).reshape(1, len(x)), model.centroids)
 
         self.train = train_function
         self.predict = predict_function

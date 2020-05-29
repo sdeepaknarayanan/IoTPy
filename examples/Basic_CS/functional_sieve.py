@@ -33,7 +33,8 @@ from sink import sink
 from merge import merge_asynch
 from recent_values import recent_values
 from basics import map_e
-    
+
+
 def sieve(in_stream, prime_stream):
     """
     Function used by both examples of prime number sieve.
@@ -66,9 +67,9 @@ def sieve(in_stream, prime_stream):
     elements of in_stream that are not multiples of p.
 
     """
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
     # The function encapsulated by the agent
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
     def f(v, state, prime_stream, out_stream):
         """
         Parameters
@@ -104,14 +105,21 @@ def sieve(in_stream, prime_stream):
         # A stateful function encapsulated by a sink agent must return the
         # next state. So, return state.
         return state
-    #---------------------------------------------------------------
+
+    # ---------------------------------------------------------------
     # Create the agent
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
     # Create a sink agent that encapsulates a stateful function f with
     # an initial state of 0. Pass parameters prime_stream and
     # out_stream from the sink agent to its encapsulated function.
-    sink(func=f, in_stream=in_stream, state=0,
-         prime_stream=prime_stream, out_stream=Stream())
+    sink(
+        func=f,
+        in_stream=in_stream,
+        state=0,
+        prime_stream=prime_stream,
+        out_stream=Stream(),
+    )
+
 
 def primes_example_1(N):
     """
@@ -130,8 +138,8 @@ def primes_example_1(N):
 
     """
     # 1. Define streams
-    numbers = Stream('integers from 2')
-    prime_stream = Stream('prime numbers')
+    numbers = Stream("integers from 2")
+    prime_stream = Stream("prime numbers")
 
     # 2. Define agents
     sieve(numbers, prime_stream)
@@ -140,9 +148,8 @@ def primes_example_1(N):
     numbers.extend(list(range(2, N)))
 
     return prime_stream
-    
 
-    
+
 def primes_example_2(N):
     """
     Agent used in example 2 in which prime_stream is the sequence of
@@ -193,11 +200,9 @@ def primes_example_2(N):
             # stream, and finished_execution remains True forever.
             return (_no_value, (function_state, True))
         # index is 0. So, this value is from state_stream.
-        output_value, next_function_state = function(
-            input_value, function_state)
+        output_value, next_function_state = function(input_value, function_state)
         # next_state = (next_function_state, finished_execution)
         return output_value, (next_function_state, finished_execution)
-
 
     def generate_numbers_until_stop_message(index_and_value, state):
         # state is initially False and switches to True if a message
@@ -211,7 +216,7 @@ def primes_example_2(N):
         if index == 1:
             # This value is from stop_stream
             # Make state True because a message was received on
-            # stop_stream. 
+            # stop_stream.
             # From now onwards, no messages are appended to the output
             # stream, and state remains True.
             return (_no_value, True)
@@ -223,7 +228,7 @@ def primes_example_2(N):
         else:
             # Append the next value to the output stream, and state
             # remains False.
-            return (value+1, state)
+            return (value + 1, state)
 
     def detect_finished_then_send_stop(v, state, N):
         length, stop = state
@@ -234,27 +239,33 @@ def primes_example_2(N):
             return (True, (length, stop))
         else:
             return (_no_value, (length, stop))
-    
+
     def first_N_elements(in_stream, N, first_N):
         def first_N_elements_of_stream(v, state, N, first_N):
             if state < N:
                 first_N.append(v)
                 state += 1
             return state
-        sink(func=first_N_elements_of_stream, in_stream=in_stream,
-             state=0, N=N, first_N=first_N)
 
-    #-----------------------------------------------------------------
+        sink(
+            func=first_N_elements_of_stream,
+            in_stream=in_stream,
+            state=0,
+            N=N,
+            first_N=first_N,
+        )
+
+    # -----------------------------------------------------------------
     # Define streams
-    #-----------------------------------------------------------------
-    state_stream = Stream(name='numbers 2, 3, 4, ...')
-    stop_stream = Stream(name='stop!')
-    prime_stream = Stream(name='prime numbers')
+    # -----------------------------------------------------------------
+    state_stream = Stream(name="numbers 2, 3, 4, ...")
+    stop_stream = Stream(name="stop!")
+    prime_stream = Stream(name="prime numbers")
     first_N = []
 
-    #-----------------------------------------------------------------
+    # -----------------------------------------------------------------
     # Define agents
-    #-----------------------------------------------------------------
+    # -----------------------------------------------------------------
     # Create agent that generates 2, 3, 4... until it receives a
     # message on stop_stream
 
@@ -262,14 +273,17 @@ def primes_example_2(N):
     ##              in_streams=[state_stream, stop_stream],
     ##              out_stream=state_stream, state=False)
     def g(v, state):
-        return v+1, state
-          
-    merge_asynch(func=execute_until_stop_message,
-                 in_streams=[state_stream, stop_stream],
-                 out_stream=state_stream, state=(None, False),
-                 function=g)
+        return v + 1, state
+
+    merge_asynch(
+        func=execute_until_stop_message,
+        in_streams=[state_stream, stop_stream],
+        out_stream=state_stream,
+        state=(None, False),
+        function=g,
+    )
     # Create an agent that sieves state_stream to create prime_stream
-    # which is a sequence of primes. 
+    # which is a sequence of primes.
     # We do this by creating a sink agent that encapsulates a stateful
     # function f with an initial state of 0. Pass parameters
     # prime_stream and out_stream from the sink agent to its
@@ -278,9 +292,13 @@ def primes_example_2(N):
 
     # Create an agent that sends a message on stop_stream when the
     # length of prime_stream exceeds N.
-    map_element(func=detect_finished_then_send_stop,
-                in_stream=prime_stream, out_stream=stop_stream,
-                state=(0, False), N=N)
+    map_element(
+        func=detect_finished_then_send_stop,
+        in_stream=prime_stream,
+        out_stream=stop_stream,
+        state=(0, False),
+        N=N,
+    )
 
     first_N_elements(in_stream=prime_stream, N=N, first_N=first_N)
 
@@ -288,8 +306,10 @@ def primes_example_2(N):
 
     return first_N, prime_stream
 
+
 def sieve_2(in_stream, primes):
     out_stream = Stream()
+
     @map_e
     def filter_multiples(v, state, primes):
         if state == 0:
@@ -298,12 +318,13 @@ def sieve_2(in_stream, primes):
         else:
             my_prime, last = state
             if v % my_prime == 0:
-                 return _no_value, state
+                return _no_value, state
             elif last:
-                 sieve_2(out_stream, primes)
-                 return v, (my_prime, False)
+                sieve_2(out_stream, primes)
+                return v, (my_prime, False)
             else:
-                 return v, state
+                return v, state
+
     filter_multiples(in_stream, out_stream, state=0, primes=primes)
 
 
@@ -313,23 +334,24 @@ def test_2():
     sieve_2(x, primes)
     x.extend(list(range(2, 20)))
     Stream.scheduler.step()
-    print (primes)
+    print(primes)
+
 
 def test():
     scheduler = Stream.scheduler
 
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
     # EXAMPLE 1
     # Makes prime_stream the sequence of primes up to a positive
     # integer N
-    #---------------------------------------------------------------
+    # ---------------------------------------------------------------
     prime_stream_1 = primes_example_1(30)
 
     # 4. Step the scheduler
     scheduler.step()
 
     # 5. Look at the output streams.
-    print (recent_values(prime_stream_1))
+    print(recent_values(prime_stream_1))
 
     first_N, prime_stream_2 = primes_example_2(15)
 
@@ -337,8 +359,8 @@ def test():
     scheduler.step()
 
     # 5. Look at the output streams.
-    print (first_N)
-    print (recent_values(prime_stream_2))
+    print(first_N)
+    print(recent_values(prime_stream_2))
     return
 
 
@@ -363,25 +385,26 @@ def sieve_step(v, state, prime_stream, out_stream):
     if state == 0:
         prime_stream.append(v)
         state = v
-        print ('In step: state ', state)
-        print ('In step: out_stream ', out_stream)
+        print("In step: state ", state)
+        print("In step: out_stream ", out_stream)
         sieve(out_stream, prime_stream)
         return _no_value, state
     else:
         if v % state != 0:
             return v, state
 
+
 def sieve(in_stream, prime_stream):
-    print ('in sieve. in_stream is ', in_stream)
-    out_stream = Stream('y')
-    print ('in sieve. out_stream is ', out_stream)
-    map_element(sieve_step, in_stream, out_stream, state=0,
-         prime_stream=prime_stream)
+    print("in sieve. in_stream is ", in_stream)
+    out_stream = Stream("y")
+    print("in sieve. out_stream is ", out_stream)
+    map_element(sieve_step, in_stream, out_stream, state=0, prime_stream=prime_stream)
+
 
 def test_sieve():
-#---------------------------------------------------------------
-# Create the agent
-#---------------------------------------------------------------
+    # ---------------------------------------------------------------
+    # Create the agent
+    # ---------------------------------------------------------------
     # Create a sink agent that encapsulates a stateful function f with
     # an initial state of 0. Pass parameters prime_stream and
     # out_stream from the sink agent to its encapsulated function.
@@ -390,11 +413,8 @@ def test_sieve():
     sieve(x, prime_stream)
     x.extend(list(range(2, 30)))
     Stream.scheduler.step()
-    print (recent_values(prime_stream))
+    print(recent_values(prime_stream))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_2()
-    
-    
-    
-    

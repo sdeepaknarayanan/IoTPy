@@ -16,19 +16,20 @@ import unittest
 # agent, stream, helper_control are in IoTPy/IoTPy/core
 from IoTPy.core.agent import Agent, InList
 from IoTPy.core.stream import Stream, StreamArray, run
+
 # check_agent_parameter_types, recent_values
 # are in IoTPy/IoTPy/helper_functions
 from IoTPy.core.helper_control import _no_value, _multivalue
 from IoTPy.agent_types.check_agent_parameter_types import *
 from IoTPy.helper_functions.recent_values import recent_values
+
 # iot is IoTPy/IoTPy/agent_types
 from IoTPy.agent_types.iot import iot, iot_merge
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 #     TESTS
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 class iot_test(unittest.TestCase):
-    
     def test_simple(self):
         """
         Create an agent with a single input stream, x, and a single
@@ -37,8 +38,8 @@ class iot_test(unittest.TestCase):
 
         """
         # Create the streams.
-        x = Stream(name='x')
-        y = Stream(name='y')
+        x = Stream(name="x")
+        y = Stream(name="y")
 
         def f(list_of_numbers, s):
             """
@@ -63,7 +64,7 @@ class iot_test(unittest.TestCase):
             agents wrap functions that do not use streams.
 
             """
-            output_list = [2*number for number in list_of_numbers]
+            output_list = [2 * number for number in list_of_numbers]
             s.extend(output_list)
             return len(list_of_numbers)
 
@@ -73,8 +74,8 @@ class iot_test(unittest.TestCase):
         x.extend(list(range(5)))
         run()
 
-        assert (recent_values(y) == [0, 2, 4, 6, 8])
-        
+        assert recent_values(y) == [0, 2, 4, 6, 8]
+
     def test_simple_array(self):
         """
         Same as test_simple except that StreamArray is used in place
@@ -86,8 +87,8 @@ class iot_test(unittest.TestCase):
 
         """
         # Create the streams arrays.
-        x = StreamArray(name='x', dtype=int)
-        y = StreamArray(name='y', dtype=int)
+        x = StreamArray(name="x", dtype=int)
+        y = StreamArray(name="y", dtype=int)
 
         def f(array_of_int, s):
             """
@@ -115,8 +116,7 @@ class iot_test(unittest.TestCase):
         # Extend input stream x of the agent with an array
         x.extend(np.arange(5, dtype=int))
         run()
-        assert np.array_equal(
-            recent_values(y), np.array([0, 2, 4, 6, 8]))
+        assert np.array_equal(recent_values(y), np.array([0, 2, 4, 6, 8]))
 
     def test_iot(self):
         x = StreamArray(dtype=int)
@@ -124,7 +124,7 @@ class iot_test(unittest.TestCase):
         z = StreamArray(dtype=int)
         u = StreamArray(dtype=int)
         v = StreamArray(dtype=int)
-        
+
         def f(A, y, z):
             """
             Function wrapped by an iot agent. The first parameter
@@ -138,8 +138,8 @@ class iot_test(unittest.TestCase):
             len(A).
 
             """
-            y.extend(2*A)
-            z.extend(3*A)
+            y.extend(2 * A)
+            z.extend(3 * A)
             # Return a pointer into the input array.
             return len(A)
 
@@ -148,8 +148,8 @@ class iot_test(unittest.TestCase):
             Parameters are similar to f.
 
             """
-            u.extend(A+A)
-            v.extend(A**2)
+            u.extend(A + A)
+            v.extend(A ** 2)
             return len(A)
 
         # Create agents that wrap functions f and g.
@@ -159,24 +159,24 @@ class iot_test(unittest.TestCase):
         # Extend stream x with an array
         x.extend(np.arange(5, dtype=int))
         run()
-        assert np.array_equal(recent_values(y), 2*np.arange(5, dtype=int))
-        assert np.array_equal(recent_values(z), 3*np.arange(5, dtype=int))
-        assert np.array_equal(recent_values(u), 2*np.arange(5, dtype=int))
-        assert np.array_equal(recent_values(v), np.arange(5, dtype=int)**2)
+        assert np.array_equal(recent_values(y), 2 * np.arange(5, dtype=int))
+        assert np.array_equal(recent_values(z), 3 * np.arange(5, dtype=int))
+        assert np.array_equal(recent_values(u), 2 * np.arange(5, dtype=int))
+        assert np.array_equal(recent_values(v), np.arange(5, dtype=int) ** 2)
 
         # Extend stream x with another array
         x.extend(np.arange(5, 10, dtype=int))
         run()
-        assert np.array_equal(recent_values(y), 2*np.arange(10, dtype=int))
-        assert np.array_equal(recent_values(z), 3*np.arange(10, dtype=int))
-        assert np.array_equal(recent_values(u), 2*np.arange(10, dtype=int))
-        assert np.array_equal(recent_values(v), np.arange(10, dtype=int)**2)
+        assert np.array_equal(recent_values(y), 2 * np.arange(10, dtype=int))
+        assert np.array_equal(recent_values(z), 3 * np.arange(10, dtype=int))
+        assert np.array_equal(recent_values(u), 2 * np.arange(10, dtype=int))
+        assert np.array_equal(recent_values(v), np.arange(10, dtype=int) ** 2)
 
     def test_iot_merge(self):
         x = StreamArray(dtype=float)
         y = StreamArray(dtype=float)
         z = StreamArray(dimension=2, dtype=float)
-        
+
         def f(A_list, z):
             """
             f is the function wrapped by an iot_merge agent.
@@ -204,16 +204,22 @@ class iot_test(unittest.TestCase):
         x.extend(np.arange(5, dtype=float))
         run()
         assert np.array_equal(recent_values(x), np.array(np.arange(5, dtype=float)))
-        assert np.array_equal(recent_values(x), np.array([0., 1., 2., 3., 4.]))
+        assert np.array_equal(recent_values(x), np.array([0.0, 1.0, 2.0, 3.0, 4.0]))
         assert np.array_equal(recent_values(y), np.zeros(shape=(0,), dtype=float))
         assert np.array_equal(recent_values(z), np.zeros(shape=(0, 2), dtype=float))
         y.extend(np.arange(100, 107, dtype=float))
         run()
-        assert np.array_equal(recent_values(x), np.array([0., 1., 2., 3., 4.]))
-        assert np.array_equal(recent_values(y), np.array([100., 101., 102., 103., 104., 105., 106.]))
+        assert np.array_equal(recent_values(x), np.array([0.0, 1.0, 2.0, 3.0, 4.0]))
         assert np.array_equal(
-            recent_values(z), np.array(
-                [[  0., 100.], [  1., 101.], [  2., 102.], [  3., 103.], [  4., 104.]]))
+            recent_values(y),
+            np.array([100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0]),
+        )
+        assert np.array_equal(
+            recent_values(z),
+            np.array(
+                [[0.0, 100.0], [1.0, 101.0], [2.0, 102.0], [3.0, 103.0], [4.0, 104.0]]
+            ),
+        )
 
     class sliding_window_test(object):
         """
@@ -223,6 +229,7 @@ class iot_test(unittest.TestCase):
         encapsulated in a class.
 
         """
+
         def __init__(self, func, in_stream, out_stream, window_size, step_size):
             # The function applied to each sliding window.
             self.func = func
@@ -241,31 +248,35 @@ class iot_test(unittest.TestCase):
                 return 0
             else:
                 # num_steps is the number of windows in the input A.
-                num_steps = int(1+(len(A) - self.window_size)//self.step_size)
+                num_steps = int(1 + (len(A) - self.window_size) // self.step_size)
                 self.output = np.zeros(num_steps, dtype=int)
                 # Iterate through the windows into A.
                 for i in range(num_steps):
-                    window = A[i*self.step_size : i*self.step_size+self.window_size]
+                    window = A[
+                        i * self.step_size : i * self.step_size + self.window_size
+                    ]
                     self.output[i] = self.func(window)
                 self.out_stream.extend(self.output)
                 # Return a pointer into the input array A.
-                return num_steps*self.step_size
+                return num_steps * self.step_size
 
     def test_iot_class(self):
 
-        x = StreamArray(name='x', dtype=int)
-        y = StreamArray(name='y', dtype=int)
+        x = StreamArray(name="x", dtype=int)
+        y = StreamArray(name="y", dtype=int)
         # Create an agent that wraps np.sum
         sw = self.sliding_window_test(
-            func=np.sum, in_stream=x, out_stream=y, window_size=5, step_size=2)
+            func=np.sum, in_stream=x, out_stream=y, window_size=5, step_size=2
+        )
         x.extend(np.arange(10, dtype=int))
         run()
         assert np.array_equal(recent_values(y), np.array([10, 20, 30]))
         x.extend(np.arange(10, 20, dtype=int))
         run()
-        assert np.array_equal(recent_values(y),
-                              np.array([10, 20., 30, 40, 50, 60, 70, 80]))
+        assert np.array_equal(
+            recent_values(y), np.array([10, 20.0, 30, 40, 50, 60, 70, 80])
+        )
 
-if __name__ == '__main__':
-    unittest.main()    
-    
+
+if __name__ == "__main__":
+    unittest.main()

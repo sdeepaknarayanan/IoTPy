@@ -1,21 +1,26 @@
 from collections import namedtuple
 import numpy as np
 
+
 class _stop_(object):
     def __init__(self):
         pass
+
 
 class _close(object):
     def __init__(self):
         pass
 
+
 class _changed(object):
     def __init__(self):
         pass
 
+
 class _unchanged(object):
     def __init__(self):
         pass
+
 
 class _no_value(object):
     """
@@ -26,8 +31,10 @@ class _no_value(object):
     take some specific action.
 
     """
+
     def __init__(self):
         pass
+
 
 class _multivalue(object):
     """
@@ -37,9 +44,11 @@ class _multivalue(object):
     See examples_element_wrapper for examples using _multivalue.
 
     """
+
     def __init__(self, lst):
         self.lst = lst
         return
+
 
 def remove_novalue_and_open_multivalue(l):
     """ This function returns a list which is the
@@ -74,15 +83,12 @@ def remove_novalue_and_open_multivalue(l):
         return l
     return_list = []
     for v in l:
-        if (isinstance(v, list) or
-            isinstance(v, np.ndarray) or
-            isinstance(v, tuple)):
+        if isinstance(v, list) or isinstance(v, np.ndarray) or isinstance(v, tuple):
             return_list.append(v)
         else:
-            if (v == _no_value or
-                v == _unchanged):
+            if v == _no_value or v == _unchanged:
                 continue
-            elif (v == _changed):
+            elif v == _changed:
                 return_list.append(1)
             elif isinstance(v, _multivalue):
                 return_list.extend(v.lst)
@@ -90,10 +96,11 @@ def remove_novalue_and_open_multivalue(l):
                 return_list.append(v)
     return return_list
 
+
 def remove_None(lst):
     if not isinstance(lst, list):
         return lst
     return [v for v in lst if v is not None]
-    
 
-TimeAndValue = namedtuple('TimeAndValue', ['time', 'value'])
+
+TimeAndValue = namedtuple("TimeAndValue", ["time", "value"])

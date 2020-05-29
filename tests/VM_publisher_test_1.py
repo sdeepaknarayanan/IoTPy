@@ -20,6 +20,7 @@ Start the subscriber an instant before starting the publisher.
 import sys
 import os
 import random
+
 sys.path.append(os.path.abspath("../multiprocessing"))
 sys.path.append(os.path.abspath("../agent_types"))
 
@@ -28,6 +29,7 @@ from distributed import distributed_process
 from VM import VM
 from op import map_element
 from source import source_func_to_stream
+
 
 def single_process_publication_producer():
     """
@@ -61,8 +63,9 @@ def single_process_publication_producer():
         A simple source which outputs 1, 2, 3,... on
         out_stream.
         """
+
         def generate_sequence(state):
-            return state+1, state+1
+            return state + 1, state + 1
 
         # Return an agent which takes 10 steps, and
         # sleeps for 0.1 seconds between successive steps, and
@@ -70,19 +73,21 @@ def single_process_publication_producer():
         # and starts the sequence with value 0. The elements on
         # out_stream will be 1, 2, 3, ...
         return source_func_to_stream(
-            func=generate_sequence, out_stream=out_stream,
-            time_interval=0.1, num_steps=10, state=0)
+            func=generate_sequence,
+            out_stream=out_stream,
+            time_interval=0.1,
+            num_steps=10,
+            state=0,
+        )
 
     # STEP 2: DEFINE ACTUATORS
     # This example has no actuators
-    
+
     # STEP 3: DEFINE COMPUTE_FUNC
     def f(in_streams, out_streams):
         map_element(
-            func=lambda x: 7*x,
-            in_stream=in_streams[0],
-            out_stream=out_streams[0])
-
+            func=lambda x: 7 * x, in_stream=in_streams[0], out_stream=out_streams[0]
+        )
 
     # STEP 4: CREATE PROCESSES
     # This process has a single input stream that we call 'in' and it
@@ -90,21 +95,21 @@ def single_process_publication_producer():
     # called 'in'.
     proc_0 = distributed_process(
         compute_func=f,
-        in_stream_names=['in'],
-        out_stream_names=['out'],
-        connect_sources=[('in', source)],
+        in_stream_names=["in"],
+        out_stream_names=["out"],
+        connect_sources=[("in", source)],
         connect_actuators=[],
-        name='proc_0')
+        name="proc_0",
+    )
 
     # FINAL STEP: CREATE A VM AND START IT.
     # Since this application has a single process it has no
     # connections between processes. The process, proc_0, publishes
     # its output stream called 'out' to a stream called
-    # 'sequence'. This process does not subscribe to streams. 
+    # 'sequence'. This process does not subscribe to streams.
     vm_0 = VM(
-        processes=[proc_0],
-        connections=[],
-        publishers=[(proc_0, 'out', 'sequence')])
+        processes=[proc_0], connections=[], publishers=[(proc_0, "out", "sequence")]
+    )
     vm_0.start()
 
 
@@ -114,15 +119,18 @@ def single_process_publication_producer():
 # ----------------------------------------------------------------
 # ----------------------------------------------------------------
 
+
 def single_process_publication_producer_test():
     print
-    print 'Starting single_process_publication_example_1()'
+    print "Starting single_process_publication_example_1()"
     single_process_publication_producer()
     print
-    print '-----------------------------------------------------'
+    print "-----------------------------------------------------"
+
 
 def test():
     single_process_publication_producer_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

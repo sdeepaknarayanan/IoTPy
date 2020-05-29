@@ -93,6 +93,7 @@ single value.
 
 import sys
 import os
+
 sys.path.append(os.path.abspath("../helper_functions"))
 sys.path.append(os.path.abspath("../core"))
 sys.path.append(os.path.abspath("../agent_types"))
@@ -105,6 +106,7 @@ from merge import weave_f
 from sink import sink
 from split import split_signal
 
+
 def sort(lst):
     """
     Parameters
@@ -112,9 +114,9 @@ def sort(lst):
     lst: list
 
     """
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 1. DEFINE FUNCTION TO BE ENCAPSULATED
-    
+
     def flip(index):
         """
         Flips elements of list, lst, if they are out of order.
@@ -127,26 +129,26 @@ def sort(lst):
         # Flip elements if out of order and return _changed
         # to indicate a change to to the corresponding index.
         # Return _unchanged if the elements are unchanged.
-        if lst[index] > lst[index+1]:
-            lst[index], lst[index+1] = lst[index+1], lst[index]
+        if lst[index] > lst[index + 1]:
+            lst[index], lst[index + 1] = lst[index + 1], lst[index]
             # Since both lst[index] and lst[index+1] changed value, return
             # _changed for both outputs corresponding to index
             # and index + 1
-            return [_changed,_changed]
+            return [_changed, _changed]
         else:
             # Since neither lst[index] nor lst[index+1] changed value,
             # return _unchanged for both outputs
             return [_unchanged, _unchanged]
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 2. CREATE STREAMS
     # Create one stream for each index into the array.
     # The stream changed[i] gets a new value when the i-th element
     # of the array is changed.
     indices = range(len(lst))
-    changed = [ Stream('changed_' + str(i)) for i in indices]
+    changed = [Stream("changed_" + str(i)) for i in indices]
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 3. CREATE AGENTS
     # Create an agent for each of the elements 0, 1, ..., len(lst)-1,
     # The agent executes its action when it reads a new value on either
@@ -155,7 +157,7 @@ def sort(lst):
     # changes lst[i].
     # Likewise, the agent sends _changed on stream changed[i+1] only
     # when it changes lst[i+1].
-    
+
     # Note: weave_f is used in split_signal below. weave_f returns a
     # stream consisting of the elements of its input streams in the
     # order in which they arrive. In this example, in_stream is a
@@ -163,12 +165,14 @@ def sort(lst):
     for i in range(len(lst) - 1):
         split_signal(
             func=flip,
-            in_stream=weave_f([changed[i], changed[i+1]]),
-            out_streams=[changed[i], changed[i+1]],
-            name=i, index=i)
+            in_stream=weave_f([changed[i], changed[i + 1]]),
+            out_streams=[changed[i], changed[i + 1]],
+            name=i,
+            index=i,
+        )
 
-    #----------------------------------------------------------------
-    #STEP 4. START COMPUTATION
+    # ----------------------------------------------------------------
+    # STEP 4. START COMPUTATION
     # Get the scheduler and execute a step.
     scheduler = Stream.scheduler
     # Start the computation by putting any value (1 in this case) in
@@ -177,6 +181,7 @@ def sort(lst):
         changed[i].append(1)
     # Start the scheduler.
     scheduler.step()
+
 
 def shortest_path(D):
     """
@@ -191,7 +196,7 @@ def shortest_path(D):
     vertex j to  vertex k.
     
     """
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 1. DEFINE FUNCTION TO BE ENCAPSULATED
     def triangle_inequality(triple):
         """
@@ -208,20 +213,21 @@ def shortest_path(D):
         if D[i][j] + D[j][k] < D[i][k]:
             D[i][k] = D[i][j] + D[j][k]
             # Since D[i][k] changed value return _changed
-            return(_changed)
+            return _changed
         else:
             # Since D[i][k] was changed by this action return _unchanged
-            return (_unchanged)
+            return _unchanged
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 2. CREATE STREAMS
     # Create an array, changed, of streams, where a value is appended
     # to changed[i][k] when D[i][k] is changed.
     indices = range(len(D))
-    changed = [[ Stream('changed_'+ str(i)+"-" + str(j))
-                 for i in indices] for j in indices]
+    changed = [
+        [Stream("changed_" + str(i) + "-" + str(j)) for i in indices] for j in indices
+    ]
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 3. CREATE AGENTS
     # Create an agent for each triple i,j,k. The agent executes its
     # action when it reads a new element of stream x. If it changes D
@@ -229,14 +235,16 @@ def shortest_path(D):
     for i in indices:
         for j in indices:
             for k in indices:
-                signal_element(func=triangle_inequality,
-                               in_stream=weave_f([changed[i][j], changed[i][k]]),
-                               out_stream=changed[i][k],
-                               name='triple_'+ str(i)+"_"+str(j)+"_"+str(k),
-                               triple=[i, j, k])
+                signal_element(
+                    func=triangle_inequality,
+                    in_stream=weave_f([changed[i][j], changed[i][k]]),
+                    out_stream=changed[i][k],
+                    name="triple_" + str(i) + "_" + str(j) + "_" + str(k),
+                    triple=[i, j, k],
+                )
 
-    #----------------------------------------------------------------
-    #STEP 4. START COMPUTATION
+    # ----------------------------------------------------------------
+    # STEP 4. START COMPUTATION
     # Get the scheduler and execute a step.
     scheduler = Stream.scheduler
     # Start the computation by putting a value on changed[i,j].
@@ -244,7 +252,7 @@ def shortest_path(D):
         for j in indices:
             changed[i][j].append(1)
     scheduler.step()
-    
+
     return D
 
 
@@ -258,7 +266,7 @@ def stop_agent_when_enough_elements(N):
     N: int (positive)
 
     """
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 1. DEFINE FUNCTIONS TO BE ENCAPSULATED
     def generate_numbers(v, state, stop):
         """
@@ -275,7 +283,7 @@ def stop_agent_when_enough_elements(N):
 
         """
         if not stop[0]:
-            return state, state+1
+            return state, state + 1
         else:
             return _no_value, state
 
@@ -283,15 +291,15 @@ def stop_agent_when_enough_elements(N):
         if v > N:
             stop[0] = True
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 2. CREATE STREAMS AND SHARED VARIABLES
     # stop is a variable shared by both agents that are created
     # below. It is initially False and set to True and then remains
-    # True. 
+    # True.
     stop = [False]
-    numbers = Stream('numbers')
+    numbers = Stream("numbers")
 
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # STEP 3. CREATE AGENTS
     # Create an agent that reads and writes the same stream: numbers.
     # The agent executes its action when a new value appears on
@@ -299,15 +307,15 @@ def stop_agent_when_enough_elements(N):
     # False. The action has no effect (it is a skip operation) if stop
     # is True.
     map_element(
-        func=generate_numbers, in_stream=numbers,
-        out_stream=numbers, state=1, stop=stop)
+        func=generate_numbers, in_stream=numbers, out_stream=numbers, state=1, stop=stop
+    )
     # Create an agent that sets stop to True after it reads more than
     # N values.
     N = 3
     sink(func=call_halt, in_stream=numbers, N=N, stop=stop)
 
-    #----------------------------------------------------------------
-    #STEP 4. START COMPUTATION
+    # ----------------------------------------------------------------
+    # STEP 4. START COMPUTATION
     # Get the scheduler and execute a step.
     scheduler = Stream.scheduler
     # Start the computation by putting a value into the numbers stream.
@@ -319,6 +327,7 @@ def stop_agent_when_enough_elements(N):
     return numbers
     assert list(range(N)) == recent_values(numbers)[:N]
 
+
 def test_shared_variables():
     # EXAMPLE 1: SORT
     lst = [10, 6, 8, 3, 20, 2, 23, 35]
@@ -326,21 +335,17 @@ def test_shared_variables():
     assert lst == [2, 3, 6, 8, 10, 20, 23, 35]
 
     # EXAMPLE 2: MATRIX OF LENGTHS OF SHORTEST PATHS
-    D = [[0, 20, 40, 60], [20, 0, 10, 1], [40, 10, 0, 100],
-         [60, 1, 100, 0]]
+    D = [[0, 20, 40, 60], [20, 0, 10, 1], [40, 10, 0, 100], [60, 1, 100, 0]]
     shortest_path(D)
-    assert D == [[0, 20, 30, 21], [20, 0, 10, 1],
-                 [30, 10, 0, 11], [21, 1, 11, 0]]
+    assert D == [[0, 20, 30, 21], [20, 0, 10, 1], [30, 10, 0, 11], [21, 1, 11, 0]]
 
     # EXAMPLE 3: STOP WHEN AGENT AFTER N ELEMENTS GENERATED.
     N = 3
     numbers = stop_agent_when_enough_elements(N)
     assert list(range(N)) == recent_values(numbers)[:N]
 
-    print ('TEST OF SHARED VARIABLES IS SUCCESSFUL!')
+    print("TEST OF SHARED VARIABLES IS SUCCESSFUL!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_shared_variables()
-
-    
-            

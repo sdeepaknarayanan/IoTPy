@@ -42,17 +42,25 @@ Agents:
 """
 from ..core.stream import Stream, _no_value
 from ..core.agent import Agent, InList
+
 # agent, stream,are in ../core
 from .check_agent_parameter_types import *
+
 # check_agent_parameter_types is in current directory
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # SPLIT: SINGLE INPUT STREAM, LIST OF OUTPUT STREAMS
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def split_element(
-        func, in_stream, out_streams,
-        state=None, call_streams=None, name=None,
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_streams,
+    state=None,
+    call_streams=None,
+    name=None,
+    *args,
+    **kwargs
+):
     """
 
     Parameters
@@ -90,35 +98,36 @@ def split_element(
     def transition(in_lists, state):
         check_in_lists_type(name, in_lists, num_in_streams)
         in_list = in_lists[0]
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged.
         if input_list is None or len(input_list) == 0:
-            return ([[]]*num_out_streams, state, [in_list.start])
+            return ([[]] * num_out_streams, state, [in_list.start])
 
         if state is None:
-            output_snapshots = \
-              [func(element, *args, **kwargs) for element in input_list]
+            output_snapshots = [
+                func(element, *args, **kwargs) for element in input_list
+            ]
         else:
-            output_snapshots = [[]]*len(input_list)
+            output_snapshots = [[]] * len(input_list)
             for i in range(len(input_list)):
-                output_snapshots[i], state = \
-                  func(input_list[i], state, *args, **kwargs)
+                output_snapshots[i], state = func(input_list[i], state, *args, **kwargs)
 
         check_func_output_for_multiple_streams(
-            func, name, num_out_streams, output_snapshots)
+            func, name, num_out_streams, output_snapshots
+        )
 
         add_to_output_streams = [list(snapshot) for snapshot in zip(*output_snapshots)]
-        return (add_to_output_streams, state, [in_list.start+len(input_list)])
+        return (add_to_output_streams, state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], out_streams, transition, state, call_streams, name)
 
 
-def split_element_f(function, in_stream, num_out_streams, state=None, *args,
-                 **kwargs):
+def split_element_f(function, in_stream, num_out_streams, state=None, *args, **kwargs):
     """
     split_element_f returns out_streams, a list of num_out_streams
     streams.  The function, with the specified state, args and kwargs,
@@ -144,13 +153,13 @@ def split_element_f(function, in_stream, num_out_streams, state=None, *args,
 
     """
     out_streams = [Stream() for _ in range(num_out_streams)]
-    split_element(
-        function, in_stream, out_streams, state, *args, **kwargs) 
+    split_element(function, in_stream, out_streams, state, *args, **kwargs)
     return out_streams
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 # SEPARATE: SINGLE INPUT STREAMS, LIST OF OUTPUT STREAM
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def separate(in_stream, out_streams, name=None):
     """
     separate is the inverse of mix (see merge.py). Each
@@ -171,17 +180,21 @@ def separate(in_stream, out_streams, name=None):
          The agent created by this function.
  
     """
+
     def f(x):
         j, v = x
         j = int(j)
         lst = [_no_value] * len(out_streams)
         lst[j] = v
         return lst
-     
+
     return split_element(
-        func=f, in_stream=in_stream, out_streams=out_streams, name=name)
+        func=f, in_stream=in_stream, out_streams=out_streams, name=name
+    )
+
 
 unmix = separate
+
 
 def separate_f(in_stream, num_out_streams):
     """
@@ -210,11 +223,12 @@ def separate_f(in_stream, num_out_streams):
     separate(in_stream, out_streams)
     return out_streams
 
+
 unmix_f = separate_f
- 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 # UNZIP: SINGLE INPUT STREAMS, LIST OF OUTPUT STREAM
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def unzip(in_stream, out_streams, name=None):
     """
     Parameters
@@ -237,14 +251,16 @@ def unzip(in_stream, out_streams, name=None):
     is placed in the j-th output stream. 
  
     """
+
     def f(lst):
         if len(lst) < len(out_streams):
             lst.extend([None] * (len(out_streams) - len(lst)))
         elif len(lst) > len(out_streams):
-            lst = lst[0:len(out_streams)]
+            lst = lst[0 : len(out_streams)]
         return lst
-     
+
     return split_element(f, in_stream, out_streams)
+
 
 def unzip_f(in_stream, num_out_streams):
     """
@@ -274,6 +290,7 @@ def unzip_f(in_stream, num_out_streams):
     unzip(in_stream, out_streams)
     return out_streams
 
+
 def timed_unzip(in_stream, out_streams):
     """
     timed_unzip unzips the elements of in_stream into each stream
@@ -299,16 +316,19 @@ def timed_unzip(in_stream, out_streams):
 
     """
     num_out_streams = len(out_streams)
+
     def f_time_unzip(timed_element):
         timestamp, messages = timed_element
         if len(messages) > num_out_streams:
             messages = messages[:num_out_streams]
         elif len(messages) < num_out_streams:
-            messages.extend([None]*(num_out_streams - len(messages)))
+            messages.extend([None] * (num_out_streams - len(messages)))
         output_list = [
-            _no_value if message is None else (timestamp, message) for
-            message in messages]
+            _no_value if message is None else (timestamp, message)
+            for message in messages
+        ]
         return output_list
+
     return split_element(f_time_unzip, in_stream, out_streams)
 
 
@@ -317,12 +337,20 @@ def timed_unzip_f(in_stream, num_out_streams):
     timed_unzip(in_stream, out_streams)
     return out_streams
 
-#-----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
 # LIST SPLIT: SINGLE INPUT STREAM, LIST OF OUTPUT STREAMS
-#-----------------------------------------------------------------------
-def split_list(func, in_stream, out_streams, state=None,
-               call_streams=None, name='split_list',
-               *args, **kwargs):
+# -----------------------------------------------------------------------
+def split_list(
+    func,
+    in_stream,
+    out_streams,
+    state=None,
+    call_streams=None,
+    name="split_list",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -347,8 +375,7 @@ def split_list(func, in_stream, out_streams, state=None,
 
     """
     # Check the types of the input lists for the transition.
-    check_split_agent_arguments(func, in_stream, out_streams,
-                                call_streams, name)
+    check_split_agent_arguments(func, in_stream, out_streams, call_streams, name)
     # Check the number of arguments in func, the transition function.
     check_num_args_in_func(state, name, func, args, kwargs)
     num_out_streams = len(out_streams)
@@ -365,8 +392,8 @@ def split_list(func, in_stream, out_streams, state=None,
         # in_list is an object of type InList, and it consists of an
         # arbitrarily long list (in_list.list), and pointers to where
         # this agent is starting to read the list (in_list.start), and
-        # where the list ends (in_list.stop). 
-        input_list = in_list.list[in_list.start:in_list.stop]
+        # where the list ends (in_list.stop).
+        input_list = in_list.list[in_list.start : in_list.stop]
 
         # Check for the null transition.
         # If the new input data is empty then return an empty list for
@@ -377,7 +404,7 @@ def split_list(func, in_stream, out_streams, state=None,
             # So, output_lists = [[]]*num_out_streams
             # return (output_lists, state,
             #         [in_list.start+len(input_list)]
-            return ([[]]*num_out_streams, state, [in_list.start])
+            return ([[]] * num_out_streams, state, [in_list.start])
 
         # Compute the output generated by this transition.
         if state is None:
@@ -385,10 +412,11 @@ def split_list(func, in_stream, out_streams, state=None,
         else:
             output_lists, state = func(input_list, state, *args, **kwargs)
 
-        assert len(output_lists) == num_out_streams, \
-          'Error in list-split transition function of agent {0}.'\
-          ' The number, {1}, of output lists does not equal the number, {2},'\
-          ' of output streams.'.format(name, len(output_lists), num_out_streams)
+        assert len(output_lists) == num_out_streams, (
+            "Error in list-split transition function of agent {0}."
+            " The number, {1}, of output lists does not equal the number, {2},"
+            " of output streams.".format(name, len(output_lists), num_out_streams)
+        )
 
         # Return: (1) output_lists, the list of outputs, one per
         #         output stream.
@@ -397,7 +425,8 @@ def split_list(func, in_stream, out_streams, state=None,
         #             this agent. Since this agent has read the entire
         #             input_list, move its starting pointer forward by
         #             the length of the input list.
-        return (output_lists, state, [in_list.start+len(input_list)])
+        return (output_lists, state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     # Create agent with the following parameters:
@@ -408,20 +437,28 @@ def split_list(func, in_stream, out_streams, state=None,
     # 5. list of calling streams
     # 6. Agent name
     return Agent([in_stream], out_streams, transition, state, call_streams, name)
-    
+
+
 def split_list_f(func, in_stream, num_out_streams, state=None, *args, **kwargs):
     out_streams = []
     for i in range(num_out_streams):
-        out_streams.append(Stream(func.__name__+in_stream.name+str(i)))
-    split_list(func, in_stream, out_streams, state,
-                     None, None, *args, **kwargs)
+        out_streams.append(Stream(func.__name__ + in_stream.name + str(i)))
+    split_list(func, in_stream, out_streams, state, None, None, *args, **kwargs)
     return out_streams
 
 
 def split_window(
-        func, in_stream, out_streams, window_size, step_size,
-        state=None, call_streams=None, name='split_window',
-        *args, **kwargs):
+    func,
+    in_stream,
+    out_streams,
+    window_size,
+    step_size,
+    state=None,
+    call_streams=None,
+    name="split_window",
+    *args,
+    **kwargs
+):
     """
     Parameters
     ----------
@@ -464,55 +501,76 @@ def split_window(
         in_list = in_lists[0]
         # The split agent has a list of output streams. So, the transition
         # outputs a list for each output stream.
-        output_lists = [ [] for _ in range(num_out_streams)]
+        output_lists = [[] for _ in range(num_out_streams)]
         list_length = in_list.stop - in_list.start
         if window_size > list_length:
             return (output_lists, state, [in_list.start])
-                
+
         # Assert: Each input stream has enough elements for a window operation.
         # num_steps is the number of window operations that can be
         # carried out with the given numbers of unprocessed elements
         # in the input streams.
-        num_steps = 1+(list_length - window_size)//step_size
-        output_snapshots = [[]]*num_steps
+        num_steps = 1 + (list_length - window_size) // step_size
+        output_snapshots = [[]] * num_steps
         for i in range(num_steps):
             window = in_list.list[
-                in_list.start+i*step_size : in_list.start+i*step_size+window_size]
+                in_list.start
+                + i * step_size : in_list.start
+                + i * step_size
+                + window_size
+            ]
             if state is None:
                 output_snapshots[i] = func(window, *args, **kwargs)
             else:
                 output_snapshots[i], state = func(window, state, *args, **kwargs)
-                
+
         check_func_output_for_multiple_streams(
-            func, name, num_out_streams, output_snapshots)
+            func, name, num_out_streams, output_snapshots
+        )
         # output_snapshots is a list of num_steps snapshots. Each snapshot is a
         # list of num_outwith one output for each output stream.
         # output_list is a list of num_out_streams lists. Each member of output_list
         # is a list
         output_list = [(output_snapshot) for output_snapshot in zip(*output_snapshots)]
-        return (output_list, state, [in_list.start+num_steps*step_size])
+        return (output_list, state, [in_list.start + num_steps * step_size])
+
     # Finished transition
 
     # Create agent
     return Agent([in_stream], out_streams, transition, state, call_streams, name)
 
-def split_window_f(func, in_stream, num_out_streams,
-                   window_size, step_size, state=None, *args, **kwargs):
+
+def split_window_f(
+    func,
+    in_stream,
+    num_out_streams,
+    window_size,
+    step_size,
+    state=None,
+    *args,
+    **kwargs
+):
     out_streams = []
     for i in range(num_out_streams):
-        out_streams.append(Stream(func.__name__+in_stream.name+str(i)))
-    split_window(func, in_stream, out_streams, window_size, step_size,
-                 state=state, *args, **kwargs)
+        out_streams.append(Stream(func.__name__ + in_stream.name + str(i)))
+    split_window(
+        func,
+        in_stream,
+        out_streams,
+        window_size,
+        step_size,
+        state=state,
+        *args,
+        **kwargs
+    )
     return out_streams
+
 
 def split_tuple(in_stream, out_streams):
     split_element(lambda x: x, in_stream, out_streams)
 
 
-
-def split_signal(
-        func, in_stream, out_streams, state=None, name=None,
-        *args, **kwargs):
+def split_signal(func, in_stream, out_streams, state=None, name=None, *args, **kwargs):
     """
     This agent executes func when it reads a new value on
     in_stream. The function func operates on kwargs and possibly
@@ -550,7 +608,7 @@ def split_signal(
         num_in_streams = 1
         check_in_lists_type(name, in_lists, num_in_streams)
         in_list = in_lists[0]
-        input_list = in_list.list[in_list.start:in_list.stop]
+        input_list = in_list.list[in_list.start : in_list.stop]
         # If the new input data is empty then return an empty list for
         # the single output stream, and leave the state and the starting
         # point for the single input stream unchanged.
@@ -570,7 +628,8 @@ def split_signal(
         assert len(output) == len(out_streams)
         output_list = [[v] for v in output]
 
-        return (output_list, state, [in_list.start+len(input_list)])
+        return (output_list, state, [in_list.start + len(input_list)])
+
     # Finished transition
 
     call_streams = None

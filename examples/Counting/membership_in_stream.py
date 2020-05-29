@@ -20,19 +20,22 @@ sys.path.append(os.path.abspath("../../IoTPy/helper_functions"))
 
 # stream is in ../../IoTPy/core
 from stream import Stream
+
 # op, source, sink are in ../../IoTPy/agent_types
 from op import map_element
 from source import source_file_to_stream
 from sink import stream_to_file
+
 # multicore is in ../../IoTPy/multiprocessing
 from multicore import run_single_process_single_source
+
 # helper_control is in ../../IoTPy/helper_functions
 from helper_control import _no_value
 
 import copy
-from probables import (BloomFilter)
-from probables import (CountMinSketch)
-from probables.hashes import (default_sha256, default_md5)
+from probables import BloomFilter
+from probables import CountMinSketch
+from probables.hashes import default_sha256, default_md5
 
 
 def membership_in_stream(in_stream, out_stream, membership_object):
@@ -55,29 +58,29 @@ def membership_in_stream(in_stream, out_stream, membership_object):
           or CountMinSketch from PyProbables.
 
     """
+
     def func(element):
         # Each element of the input stream is assumed to be a
         # pair: function_name and a value.
         function_name, value = element
-        if function_name == 'add':
+        if function_name == "add":
             membership_object.add(value)
             return _no_value
-        elif function_name == 'remove':
+        elif function_name == "remove":
             membership_object.remove(value)
             return _no_value
-        elif function_name == 'check':
+        elif function_name == "check":
             return (value, membership_object.check(value))
         else:
             raise ValueError
-        
+
     map_element(func, in_stream, out_stream)
 
-    
-#----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
 #         TESTS
-#----------------------------------------------------------------------
-def test_membership(
-        in_filename, bloom_filter_filename, count_min_sketch_filename):
+# ----------------------------------------------------------------------
+def test_membership(in_filename, bloom_filter_filename, count_min_sketch_filename):
     """
     Parameters
     ----------
@@ -108,37 +111,43 @@ def test_membership(
     # bloom_filter and count_min_sketch are examples of
     # membership_object.
     bloom_filter = BloomFilter(
-        est_elements=1000, false_positive_rate=0.05,
-        hash_function=default_sha256)
+        est_elements=1000, false_positive_rate=0.05, hash_function=default_sha256
+    )
     count_min_sketch = CountMinSketch(width=100000, depth=5)
 
     def compute_func(in_streams, out_streams):
-        bloom_filter_out_stream = Stream('Bloom output stream')
-        count_min_sketch_out_stream = Stream('CountMinSketch output stream')
+        bloom_filter_out_stream = Stream("Bloom output stream")
+        count_min_sketch_out_stream = Stream("CountMinSketch output stream")
         membership_in_stream(
             in_stream=in_streams[0],
             out_stream=bloom_filter_out_stream,
-            membership_object=bloom_filter)
+            membership_object=bloom_filter,
+        )
         membership_in_stream(
             in_stream=in_streams[0],
             out_stream=count_min_sketch_out_stream,
-            membership_object=count_min_sketch)
+            membership_object=count_min_sketch,
+        )
         stream_to_file(
-            in_stream=bloom_filter_out_stream,
-            filename=bloom_filter_filename)
+            in_stream=bloom_filter_out_stream, filename=bloom_filter_filename
+        )
         stream_to_file(
-            in_stream=count_min_sketch_out_stream,
-            filename=count_min_sketch_filename)
+            in_stream=count_min_sketch_out_stream, filename=count_min_sketch_filename
+        )
+
     def source_func(out_stream):
         """
         Puts the input file on to a stream.
 
         """
+
         def g(element):
             function_name, obj = element.split()
             return (function_name, obj)
+
         return source_file_to_stream(
-            func=g, out_stream=out_stream, filename=in_filename)
+            func=g, out_stream=out_stream, filename=in_filename
+        )
 
     # Execute a single process with the specified single source
     # and with the agents specified in compute_func.
@@ -147,39 +156,41 @@ def test_membership(
 
 def test_count_min_sketch(in_filename, out_filename):
     membership_object = CountMinSketch(width=100000, depth=5)
+
     def compute_func(in_streams, out_streams):
-        y = Stream('Bloom output stream')
+        y = Stream("Bloom output stream")
         membership_in_stream(
-            in_stream=in_streams[0], out_stream=y, membership_object=membership_object)
+            in_stream=in_streams[0], out_stream=y, membership_object=membership_object
+        )
         stream_to_file(in_stream=y, filename=out_filename)
+
     def source_func(out_stream):
         def g(element):
             function_name, obj = element.split()
             return (function_name, obj)
+
         return source_file_to_stream(
-            func=g, out_stream=out_stream, filename=in_filename)
+            func=g, out_stream=out_stream, filename=in_filename
+        )
+
     run_single_process_single_source(source_func, compute_func)
 
 
-    
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 #         RUN TESTS
-#----------------------------------------------------------------------
-if __name__ == '__main__':
-    print ('Test count_min_sketch')
+# ----------------------------------------------------------------------
+if __name__ == "__main__":
+    print("Test count_min_sketch")
     test_count_min_sketch(
-        in_filename='input_membership_test.txt',
-        out_filename='output_count_min_sketch.txt')
-    print ('Output is in file output_count_min_sketch.txt')
+        in_filename="input_membership_test.txt",
+        out_filename="output_count_min_sketch.txt",
+    )
+    print("Output is in file output_count_min_sketch.txt")
     print
-    print ('Test membership with Bloom Filter')
+    print("Test membership with Bloom Filter")
     test_membership(
-        in_filename='input_membership_test.txt',
-        bloom_filter_filename='output_bloom_filter_filename.txt',
-        count_min_sketch_filename='output_count_min_sketch_filename.txt')
-    print ('Output is in file output_count_min_sketch_filename.txt')
-    
-
-    
-    
-
+        in_filename="input_membership_test.txt",
+        bloom_filter_filename="output_bloom_filter_filename.txt",
+        count_min_sketch_filename="output_count_min_sketch_filename.txt",
+    )
+    print("Output is in file output_count_min_sketch_filename.txt")

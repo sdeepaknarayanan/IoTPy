@@ -3,8 +3,9 @@ This module has targets for threads in a multithreaded application.
 
 """
 from ..core.stream import run
+
 # run is in ../core/stream.py
-def thread_target_appending(q_in, list_q_out, in_streams, finished='_finished'):
+def thread_target_appending(q_in, list_q_out, in_streams, finished="_finished"):
     """
     The target of a thread running IoTPy code. The thread waits for values to be
     put into it input queue, q_in. These elements are 2-tuples:
@@ -43,7 +44,8 @@ def thread_target_appending(q_in, list_q_out, in_streams, finished='_finished'):
         stream.append(stream_element)
         run()
 
-def thread_target_extending(q_in, list_q_out, in_streams, finished='_finished'):
+
+def thread_target_extending(q_in, list_q_out, in_streams, finished="_finished"):
     """
     Same as thread_target_appending except that elements put
     into q_in are pairs of the form (stream_name, stream_segment)

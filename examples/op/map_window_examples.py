@@ -9,6 +9,7 @@ This example demonstrates how to use :function:`filter_element` in
 agent_types/op.py on streams.
 """
 import sys
+
 sys.path.append("../../IoTPy/")
 sys.path.append("../../IoTPy/core")
 sys.path.append("../../IoTPy/agent_types")
@@ -16,24 +17,26 @@ sys.path.append("../../IoTPy/helper_functions")
 
 # stream is in IoTPy/IoTPy/core
 from stream import Stream, run
+
 # op, check_agent_parameter_types are in IoTPy/IoTPy/agent_types
 from op import map_window
 from check_agent_parameter_types import *
+
 # recent_values is in IoTPy/IoTPy/helper_functions
 from recent_values import recent_values
 
+
 def map_window_examples_simple():
 
-    #----------------------------------------------------------------    
+    # ----------------------------------------------------------------
     # Example with no state and no additional parameters
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # Create streams
-    x = Stream('x')
+    x = Stream("x")
     s = Stream()
 
     # Create agents
-    map_window(func=sum, in_stream=x, out_stream=s,
-               window_size=3, step_size=10)
+    map_window(func=sum, in_stream=x, out_stream=s, window_size=3, step_size=10)
 
     # Explanation of agent
     # The function sum() returns the sum of the window.
@@ -54,26 +57,28 @@ def map_window_examples_simple():
     # Inspect output
     assert recent_values(s) == [3, 33, 63, 93]
 
+
 def map_window_example_simple_with_state():
-    #----------------------------------------------------------------    
+    # ----------------------------------------------------------------
     # Example with state and no additional parameters
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # Declare functions
     def comp(this_list, state):
-       # this_list is a list
-       # state is a number
-       # return next element of output stream, next state
-       next_state = sum(this_list)
-       next_output_element = sum(this_list) > state
-       return next_output_element, next_state
+        # this_list is a list
+        # state is a number
+        # return next element of output stream, next state
+        next_state = sum(this_list)
+        next_output_element = sum(this_list) > state
+        return next_output_element, next_state
 
     # Create streams
-    x = Stream('x')
-    c = Stream('c')
+    x = Stream("x")
+    c = Stream("c")
 
     # Create agents
-    map_window(func=comp, in_stream=x, out_stream=c, 
-               state=0, window_size=2, step_size=4)
+    map_window(
+        func=comp, in_stream=x, out_stream=c, state=0, window_size=2, step_size=4
+    )
 
     # Explanation of agent
     # The initial state is 0
@@ -95,24 +100,26 @@ def map_window_example_simple_with_state():
     # Inspect output
     assert recent_values(c) == [True, False, True]
 
+
 def map_window_example_simple_with_parameter():
-    #----------------------------------------------------------------    
+    # ----------------------------------------------------------------
     # Example with no state and additional parameters
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # The additional parameter is threshold
     # Since this agent has no state, this function returns a single
     # value which is appended to the output stream.
     # Declare functions
     def thresh(in_stream_window, threshold):
-       return sum(in_stream_window) > threshold
+        return sum(in_stream_window) > threshold
 
     # Create streams
-    x = Stream('x')
-    t = Stream('t')
+    x = Stream("x")
+    t = Stream("t")
 
     # Create agents
-    map_window(func=thresh, in_stream=x, out_stream=t, window_size=3,
-               step_size=2, threshold=0)
+    map_window(
+        func=thresh, in_stream=x, out_stream=t, window_size=3, step_size=2, threshold=0
+    )
 
     # Explanation of agent
     # For all j, : t[j] is True if and only if
@@ -136,26 +143,34 @@ def map_window_example_simple_with_parameter():
     # Inspect output
     assert recent_values(t) == [True, False, True, False]
 
+
 def map_window_example_simple_with_state_and_parameter():
-    #----------------------------------------------------------------    
+    # ----------------------------------------------------------------
     # Example with state and additional parameters
-    #----------------------------------------------------------------
+    # ----------------------------------------------------------------
     # Declare functions
     # This function returns an element of the output stream and then
     # next state.
     # The parameter is multiplicand.
     def maxes(in_stream_window, state, multiplicand):
-       next_output_element = sum(in_stream_window) > multiplicand * state
-       next_state = max(state, sum(in_stream_window))
-       return (next_output_element, next_state)
+        next_output_element = sum(in_stream_window) > multiplicand * state
+        next_state = max(state, sum(in_stream_window))
+        return (next_output_element, next_state)
 
     # Create streams
-    x = Stream('x')
-    m = Stream('m')
+    x = Stream("x")
+    m = Stream("m")
 
     # Create agents
-    map_window(func=maxes, in_stream=x, out_stream=m, state=0,
-               window_size=2, step_size=3, multiplicand=1.5)
+    map_window(
+        func=maxes,
+        in_stream=x,
+        out_stream=m,
+        state=0,
+        window_size=2,
+        step_size=3,
+        multiplicand=1.5,
+    )
 
     # Explanation of agent
     # in_stream_window on step j is:
@@ -187,7 +202,7 @@ def map_window_example_simple_with_state_and_parameter():
     assert recent_values(m) == [True, False, True]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     map_window_examples_simple()
     map_window_example_simple_with_state()
     map_window_example_simple_with_parameter()

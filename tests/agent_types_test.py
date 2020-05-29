@@ -8,6 +8,8 @@ from sink_test import test_sink
 from source_test import test_source
 from shared_variables_test import test_shared_variables
 from basics_test import test_basics
+
+
 def test():
     test_element()
     test_list()
@@ -19,5 +21,6 @@ def test():
     test_sink()
     test_basics()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()

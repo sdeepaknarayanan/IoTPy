@@ -1,1 +1,2 @@
-def recent_values(stream): return stream.recent[:stream.stop]
+def recent_values(stream):
+    return stream.recent[: stream.stop]

@@ -1,4 +1,3 @@
-
 """
 Creates a multiprocess, multithread application to detect high
 readings.
@@ -20,8 +19,10 @@ from op import map_element, map_window
 from merge import zip_map, merge_window
 from timed_agent import timed_window, timed_zip_agent
 from sink import stream_to_file
+
 # agent is in ../../IoTPy/core
 from agent import Agent
+
 # check_agent_parameter_types is in ../../IoTPy/helper_functions
 # helper_control and basics are in ../../IoTPy/helper_functions
 from check_agent_parameter_types import *
@@ -30,9 +31,9 @@ from run import run
 from recent_values import recent_values
 from basics import map_w, map_e, merge_e
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # Agent that subtracts the mean in a stream
-#----------------------------------------------------
+# ----------------------------------------------------
 @map_w
 def subtract_mean(window):
     """
@@ -63,12 +64,13 @@ def subtract_mean(window):
        The amount that the sliding window is moved on each step.
 
     """
-    return window[-1] - sum(window)/float(len(window))
+    return window[-1] - sum(window) / float(len(window))
 
-#----------------------------------------------------
+
+# ----------------------------------------------------
 # Agent that computes the magnitude of a vector
-#----------------------------------------------------
-@merge_e 
+# ----------------------------------------------------
+@merge_e
 def magnitude_of_vector(coordinates):
     """
     Parameters
@@ -92,12 +94,13 @@ def magnitude_of_vector(coordinates):
        in_streams[0][j], in_streams[1][j], in_streams[2][j]
     
     """
-    return math.sqrt(sum([v*v for v in coordinates]))
+    return math.sqrt(sum([v * v for v in coordinates]))
 
 
-#----------------------------------------------------
+# ----------------------------------------------------
 # Agent that computes local anomalies
-#----------------------------------------------------
+# ----------------------------------------------------
+
 
 def simple_anomalies(in_stream, out_stream, MAGNITUDE_THRESHOLD):
     """
@@ -114,6 +117,7 @@ def simple_anomalies(in_stream, out_stream, MAGNITUDE_THRESHOLD):
     exceeded MAGNITUDE_THRESHOLD.
 
     """
+
     @map_e
     def f(value, state, THRESHOLD):
         """
@@ -143,6 +147,7 @@ def quench(in_stream, out_stream, QUENCH_TIME):
     QUENCH_TIME: int, positive (constant)
 
     """
+
     @map_e
     def f(timestamped_value, state):
         """
@@ -175,15 +180,17 @@ def quench(in_stream, out_stream, QUENCH_TIME):
             # This input is passed through because it
             # arrived outside a quench period.
             return timestamped_value, state
+
     # The function annotated with @map_e has a single
     # in_stream, a single out_stream and an initial
     # state.
     f(in_stream, out_stream, state=-QUENCH_TIME)
 
-#----------------------------------------------------
+
+# ----------------------------------------------------
 # Agent that aggregates local anomalies to form
 # global anomalies
-#----------------------------------------------------
+# ----------------------------------------------------
 def aggregate_anomalies(in_streams, out_stream, timed_window_size):
     """
     Parameters
@@ -200,27 +207,29 @@ def aggregate_anomalies(in_streams, out_stream, timed_window_size):
        if they are within W time units of each other.
 
     """
-    aggregator = aggregate_large_magnitudes(
-        num_streams=2, THRESHOLD=2)
-    zipped_stream = Stream('time zipped stream')
-    global_anomalies_stream = Stream('global anomalies stream')
-    timed_zip_agent(
-        in_streams=in_streams,
-        out_stream=zipped_stream)
+    aggregator = aggregate_large_magnitudes(num_streams=2, THRESHOLD=2)
+    zipped_stream = Stream("time zipped stream")
+    global_anomalies_stream = Stream("global anomalies stream")
+    timed_zip_agent(in_streams=in_streams, out_stream=zipped_stream)
     timed_window(
         func=aggregator.func,
         in_stream=zipped_stream,
         out_stream=global_anomalies_stream,
         window_duration=timed_window_size,
-        step_time=1)
+        step_time=1,
+    )
+
     def get_time(timed_element):
         timestamp, value = timed_element
         time_of_high_magnitude, num_high_magnitude = value
         return time_of_high_magnitude
+
     stream_to_file(
         in_stream=global_anomalies_stream,
-        filename='global_anomalies.txt',
-        element_function=get_time)
+        filename="global_anomalies.txt",
+        element_function=get_time,
+    )
+
 
 class aggregate_large_magnitudes(object):
     """
@@ -243,6 +252,7 @@ class aggregate_large_magnitudes(object):
        The last timestamp output by this agent.
 
     """
+
     def __init__(self, num_streams, THRESHOLD):
         self.num_streams = num_streams
         self.THRESHOLD = THRESHOLD
@@ -259,12 +269,11 @@ class aggregate_large_magnitudes(object):
         for time_and_magnitudes in window:
             timestamp, magnitudes = time_and_magnitudes
             for i in range(self.num_streams):
-                if (magnitudes[i] is not None and
-                    not self.high_magnitude_streams[i]):
+                if magnitudes[i] is not None and not self.high_magnitude_streams[i]:
                     self.high_magnitude_streams[i] = True
             num_high_magnitude_streams = sum(self.high_magnitude_streams)
             if num_high_magnitude_streams >= self.THRESHOLD:
-                new_timestamp = (first_timestamp + timestamp)/2
+                new_timestamp = (first_timestamp + timestamp) / 2
                 self.high_magnitude_streams = [False for _ in range(self.num_streams)]
                 if new_timestamp != self.latest_output_timestamp:
                     self.latest_output_timestamp = new_timestamp
@@ -273,17 +282,13 @@ class aggregate_large_magnitudes(object):
 
 
 def test():
-    x = Stream('x')
-    y = Stream('y')
+    x = Stream("x")
+    y = Stream("y")
     subtract_mean(x, y, window_size=10, step_size=10)
     x.extend(list(range(100)))
     run()
-    print (recent_values(y))
+    print(recent_values(y))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test()
-    
-        
-        
-        
-        
