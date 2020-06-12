@@ -1,4 +1,5 @@
 import multiprocessing
+import unittest
 
 main_lock = multiprocessing.Lock()
 
@@ -15,11 +16,16 @@ class c(object):
             self.n +=1
             print ('n is ', self.n)
 
-x = c(0)
-y = c(0)
-x.main_lock = main_lock
-y.main_lock = main_lock
-assert x.main_lock == y.main_lock
+class test_lock(unittest.TestCase):
 
-x.f()
-y.f()
+    def test_lock(self):
+
+        x = c(0)
+        y = c(0)
+        x.main_lock = main_lock
+        y.main_lock = main_lock
+        assert x.main_lock == y.main_lock
+        x.f()
+        y.f()
+if __name__=='__main__':
+    unittest.main()
