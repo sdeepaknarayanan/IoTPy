@@ -1,15 +1,14 @@
 
 import unittest
-from .element_test import test_element
-from .list_test import test_list
-from .window_test import test_window_agents
-from .merge_test import test_merge_agents
-from .split_test import test_split_agents
-from .multi_test import test_multi
-from .sink_test import test_sink
-from .source_test import test_source
-from .shared_variables_test import test_shared_variables
-from .basics_test import test_basics
+from .test_element import test_element
+from .test_list import test_list
+from .test_window import test_window_agents
+from .test_merge import test_merge_agents
+from .test_split import test_split_agents
+from .test_multi import test_multi
+from .test_sink import test_sink
+from .test_shared_variables import test_shared_variables
+from .test_basics import test_basics
 
 if __name__ == '__main__':
     unittest.main()
