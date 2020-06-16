@@ -9,11 +9,11 @@
 
 IoTPy is a Python package that helps you to build applications that operate on streams of data.
 
-THE TWO GOALS OF IOTPY
+The two goals of IoTPy:
 
-Build non-terminating functions that operate on endless streams by reusing terminating functions, such as those in libraries like NumPy and SciPy.
+* Build non-terminating functions that operate on endless streams by reusing terminating functions, such as those in libraries like NumPy and SciPy.
 
-Build multithreaded, multicore, distributed applications by simply connecting streams.
+* Build multithreaded, multicore, distributed applications by simply connecting streams.
 
 Sensors, social media, news feeds, webcams and other sources generate streams of data. Many applications ingest and analyze data streams to control actuators, generate alerts, and feed continuous displays. IoTPy helps you to build such applications.
 
@@ -41,7 +41,7 @@ python setup.py install
 
 ## Core Contributors
 
-* Prof. Kanianthra Mani Chandy, Caltech
+* Prof. [Kanianthra Mani Chandy](http://cms.caltech.edu/people/mani), California Institute of Technology
 * S. Deepak Narayanan, IIT Gandhinagar
 
 
