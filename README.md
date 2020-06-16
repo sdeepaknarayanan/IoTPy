@@ -1,7 +1,6 @@
 <div align="center">    
  
 # IoTPy: Python + Streams
----
 
 </div>
 
