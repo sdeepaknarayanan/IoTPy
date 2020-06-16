@@ -1,9 +1,9 @@
----   
 <div align="center">    
  
 # IoTPy: Python + Streams
 
 </div>
+---
 
 ## Description
 
@@ -21,13 +21,20 @@ IoTPy is currently distributed under the 3-Clause BSD license.
 
 ## Installation
 
-### Latest Release on PyPI
+### Dependencies
+* Python (>=2.7)
+* NumPy (>=1.11.0)
 
+For distributed applications, additional dependencies include the following 
+* Pika (>=1.1.0)
+Note that Pika may require other software to run.
+
+### User Installation
+The easiest way to install IoTPy is using ```pip``` as shows below.
 ```bash
 pip install IoTPy
 ```
-### Source Installation from GitHub
-
+To install from source, please proceed as shown below:
 ```bash
 git clone https://github.com/AssembleSoftware/IoTPy.git
 cd IoTPy
@@ -43,5 +50,11 @@ python setup.py install
 
 * Prof. [Kanianthra Mani Chandy](http://cms.caltech.edu/people/mani), California Institute of Technology
 * S. Deepak Narayanan, IIT Gandhinagar
+
+## Contributing
+
+* We will soon create a branch ```dev``` where people can contribute. 
+
+
 
 
