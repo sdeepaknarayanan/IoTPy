@@ -49,51 +49,81 @@
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-<p>&lt;div align=”center”&gt;</p>
-<p># IoTPy: Python + Streams</p>
-<p>&lt;/div&gt;</p>
-<p>## Description</p>
-<p>IoTPy is a Python package that helps you to build applications that operate on streams of data.</p>
+<div class="docutils container">
+<p class="rubric" id="iotpy-python-streams">IoTPy: Python + Streams</p>
+</div>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>IoTPy is a Python package that helps you to build applications that
+operate on streams of data.</p>
 <p>The two goals of IoTPy:</p>
 <ul class="simple">
-<li><p>Build non-terminating functions that operate on endless streams by reusing terminating functions, such as those in libraries like NumPy and SciPy.</p></li>
-<li><p>Build multithreaded, multicore, distributed applications by simply connecting streams.</p></li>
+<li><p>Build non-terminating functions that operate on endless streams by
+reusing terminating functions, such as those in libraries like NumPy
+and SciPy.</p></li>
+<li><p>Build multithreaded, multicore, distributed applications by simply
+connecting streams.</p></li>
 </ul>
-<p>Sensors, social media, news feeds, webcams and other sources generate streams of data. Many applications ingest and analyze data streams to control actuators, generate alerts, and feed continuous displays. IoTPy helps you to build such applications.</p>
+<p>Sensors, social media, news feeds, webcams and other sources generate
+streams of data. Many applications ingest and analyze data streams to
+control actuators, generate alerts, and feed continuous displays. IoTPy
+helps you to build such applications.</p>
 <p>IoTPy is currently distributed under the 3-Clause BSD license.</p>
-<p>## Installation</p>
-<p>### Dependencies
-* Python (&gt;=3.5)
-* NumPy (&gt;=1.18.4)</p>
-<p>For distributed applications, additional dependencies include the following:
-* Pika (1.1.0)
-Note that Pika may require other software to run.</p>
-<p>### User Installation
-The easiest way to install IoTPy is using <code class="docutils literal notranslate"><span class="pre">`pip3`</span></code> as shows below.
-<code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">IoTPy</span>
-<span class="pre">`</span></code>
-To install from source, please proceed as shown below:
-<code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/AssembleSoftware/IoTPy.git</span>
-<span class="pre">cd</span> <span class="pre">IoTPy</span>
-<span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span>
-<span class="pre">`</span></code></p>
-<p>## Examples</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Please see the [Jupyter Notebooks](<a class="reference external" href="https://github.com/AssembleSoftware/IoTPy/tree/master/examples">https://github.com/AssembleSoftware/IoTPy/tree/master/examples</a>) inside the Examples directory above. We have several examples demonstrating a variety of applications that have been developed using IoTPy.</p></li>
+<li><p>Python (&gt;=3.5)</p></li>
+<li><p>NumPy (&gt;=1.18.4)</p></li>
 </ul>
-<p>## Documentation</p>
+<p>For distributed applications, additional dependencies include the
+following: * Pika (1.1.0) Note that Pika may require other software to
+run.</p>
+</div>
+<div class="section" id="user-installation">
+<h3>User Installation<a class="headerlink" href="#user-installation" title="Permalink to this headline">¶</a></h3>
+<p>The easiest way to install IoTPy is using <code class="docutils literal notranslate"><span class="pre">pip3</span></code> as shows below.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3 install IoTPy
+</pre></div>
+</div>
+<p>To install from source, please proceed as shown below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/AssembleSoftware/IoTPy.git
+<span class="nb">cd</span> IoTPy
+python3 setup.py install
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Our project website is [AssembleSoftware](<a class="reference external" href="https://www.assemblesoftware.com/">https://www.assemblesoftware.com/</a>). We request anyone using IoTPy to visit the website to develop a better understading of IoTPy and its aims.</p></li>
+<li><p>Please see the <a class="reference external" href="https://github.com/AssembleSoftware/IoTPy/tree/master/examples">Jupyter Notebooks</a> inside the Examples directory
+above. We have several examples demonstrating a variety of
+applications that have been developed using IoTPy.</p></li>
+</ul>
+</div>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Our project website is <a class="reference external" href="https://www.assemblesoftware.com/">AssembleSoftware</a>. We request anyone using
+IoTPy to visit the website to develop a better understading of IoTPy
+and its aims.</p></li>
 <li><p>Documentation for the Code will be released soon.</p></li>
 </ul>
-<p>## Contributors</p>
-<p>Several people have contributed to IoTPy. To view the list of contributors, please visit [this](<a class="reference external" href="https://www.assemblesoftware.com/people-k-mani-chandy">https://www.assemblesoftware.com/people-k-mani-chandy</a>) link on AssembleSoftware.</p>
-<p>## Contributing</p>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<p>Several people have contributed to IoTPy. To view the list of
+contributors, please visit <a class="reference external" href="https://www.assemblesoftware.com/people-k-mani-chandy">this</a> link on AssembleSoftware.</p>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>We will soon create specific instructions for contributing to IoTPy.</p></li>
 </ul>
+</div>
 </div>
 
 
@@ -106,7 +136,19 @@ To install from source, please proceed as shown below:
   <h3><a href="#">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Welcome to IoTPy’s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a><ul>
+<li><a class="reference internal" href="#description">Description</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#user-installation">User Installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+</ul>
+</li>
 </ul>
 
   <div role="note" aria-label="source link">
